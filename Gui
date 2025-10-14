@@ -1,0 +1,251 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- Цветовые темы
+local Themes = {
+    Dark = {
+        Main = Color3.fromRGB(30, 30, 30),
+        Secondary = Color3.fromRGB(55, 55, 55),
+        Accent = Color3.fromRGB(124, 37, 255),
+        Text = Color3.fromRGB(255, 255, 255),
+        Button = Color3.fromRGB(85, 85, 85),
+        ButtonHover = Color3.fromRGB(100, 100, 100)
+    },
+    Light = {
+        Main = Color3.fromRGB(255, 255, 255),
+        Secondary = Color3.fromRGB(240, 240, 240),
+        Accent = Color3.fromRGB(124, 37, 255),
+        Text = Color3.fromRGB(0, 0, 0),
+        Button = Color3.fromRGB(230, 230, 230),
+        ButtonHover = Color3.fromRGB(220, 220, 220)
+    }
+}
+
+local currentTheme = Themes.Dark
+
+-- Функция для создания скругленных элементов
+local function createRoundFrame(name, size, position, parent)
+    local frame = Instance.new("Frame")
+    frame.Name = name
+    frame.Size = size
+    frame.Position = position
+    frame.BackgroundColor3 = currentTheme.Main
+    frame.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentTheme.Secondary
+    stroke.Thickness = 1
+    stroke.Parent = frame
+    
+    if parent then
+        frame.Parent = parent
+    end
+    
+    return frame
+end
+
+-- Функция для создания кнопок
+local function createButton(text, size, position, parent, callback)
+    local button = createRoundFrame("Button", size, position, parent)
+    button.BackgroundColor3 = currentTheme.Button
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = currentTheme.Text
+    label.TextSize = 14
+    label.Font = Enum.Font.GothamSemibold
+    label.Parent = button
+    
+    -- Анимации при наведении
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.ButtonHover}):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Button}):Play()
+    end)
+    
+    button.MouseButton1Click:Connect(function()
+        if callback then
+            callback()
+        end
+    end)
+    
+    return button
+end
+
+-- Функция для создания переключателей
+local function createToggle(text, size, position, parent, callback, default)
+    local toggle = createRoundFrame("Toggle", size, position, parent)
+    toggle.BackgroundColor3 = currentTheme.Secondary
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = currentTheme.Text
+    label.TextSize = 14
+    label.Font = Enum.Font.GothamSemibold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = toggle
+    
+    local toggleButton = createRoundFrame("ToggleButton", UDim2.new(0, 40, 0, 20), UDim2.new(1, -50, 0.5, -10), toggle)
+    toggleButton.BackgroundColor3 = currentTheme.Main
+    
+    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 16, 0, 16), UDim2.new(0, 2, 0.5, -8), toggleButton)
+    toggleDot.BackgroundColor3 = currentTheme.Text
+    
+    local isToggled = default or false
+    
+    local function updateToggle()
+        if isToggled then
+            TweenService:Create(toggleDot, TweenInfo.new(0.2), {Position = UDim2.new(1, -18, 0.5, -8)}):Play()
+            TweenService:Create(toggleButton, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Accent}):Play()
+        else
+            TweenService:Create(toggleDot, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
+            TweenService:Create(toggleButton, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Main}):Play()
+        end
+    end
+    
+    updateToggle()
+    
+    toggle.MouseButton1Click:Connect(function()
+        isToggled = not isToggled
+        updateToggle()
+        if callback then
+            callback(isToggled)
+        end
+    end)
+    
+    return toggle, function(state) 
+        isToggled = state 
+        updateToggle() 
+    end
+end
+
+-- Создание главного окна
+local function createWindow(title, size, position)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = title
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = game:GetService("CoreGui")
+    
+    local mainWindow = createRoundFrame("MainWindow", size, position, screenGui)
+    mainWindow.ClipsDescendants = true
+    
+    -- Заголовок окна
+    local titleBar = createRoundFrame("TitleBar", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 0), mainWindow)
+    titleBar.BackgroundColor3 = currentTheme.Accent
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -40, 1, 0)
+    titleLabel.Position = UDim2.new(0, 10, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = currentTheme.Text
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = titleBar
+    
+    -- Кнопка закрытия
+    local closeButton = createRoundFrame("CloseButton", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0.5, -15), titleBar)
+    closeButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    
+    local closeLabel = Instance.new("TextLabel")
+    closeLabel.Size = UDim2.new(1, 0, 1, 0)
+    closeLabel.Position = UDim2.new(0, 0, 0, 0)
+    closeLabel.BackgroundTransparency = 1
+    closeLabel.Text = "X"
+    closeLabel.TextColor3 = currentTheme.Text
+    closeLabel.TextSize = 14
+    closeLabel.Font = Enum.Font.GothamBold
+    closeLabel.Parent = closeButton
+    
+    closeButton.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
+    
+    -- Контентная область
+    local contentFrame = createRoundFrame("Content", UDim2.new(1, -20, 1, -60), UDim2.new(0, 10, 0, 50), mainWindow)
+    contentFrame.BackgroundColor3 = currentTheme.Secondary
+    
+    local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
+    scrollingFrame.BackgroundTransparency = 1
+    scrollingFrame.BorderSizePixel = 0
+    scrollingFrame.ScrollBarThickness = 6
+    scrollingFrame.ScrollBarImageColor3 = currentTheme.Accent
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scrollingFrame.Parent = contentFrame
+    
+    local uiListLayout = Instance.new("UIListLayout")
+    uiListLayout.Padding = UDim.new(0, 10)
+    uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    uiListLayout.Parent = scrollingFrame
+    
+    uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 10)
+    end)
+    
+    -- Перетаскивание окна
+    local dragging = false
+    local dragInput, dragStart, startPos
+    
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainWindow.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    titleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            mainWindow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    return {
+        ScreenGui = screenGui,
+        MainWindow = mainWindow,
+        Content = scrollingFrame,
+        
+        addButton = function(self, text, callback)
+            return createButton(text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), self.Content, callback)
+        end,
+        
+        addToggle = function(self, text, callback, default)
+            return createToggle(text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), self.Content, callback, default)
+        end
+    }
+end
