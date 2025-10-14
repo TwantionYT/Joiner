@@ -540,7 +540,7 @@ end
 -- Создание главного окна
 local function createWindow(title, size, position)
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "MaterialLua_" .. title
+    screenGui.Name = "MaterialLua_" .. HttpService:GenerateGUID(false)
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.Enabled = false
     
@@ -590,7 +590,7 @@ local function createWindow(title, size, position)
     -- Название окна - сдвинуто левее
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(0.7, 0, 1, 0) -- Увеличиваем ширину для смещения левее
-    titleLabel.Position = UDim2.new(0.3, 0, 0, 0) -- Смещаем левее (было 0.4)
+    titleLabel.Position = UDim2.new(0.3, 0, 0, 0) -- Смещаем левее
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
@@ -602,14 +602,52 @@ local function createWindow(title, size, position)
     
     -- Иконка рядом с названием - тоже сдвигаем левее
     local titleIcon = createIcon("⚡", 28, titleBar)
-    titleIcon.Position = UDim2.new(0.3, -35, 0.5, -14) -- Смещаем левее (было 0.4)
+    titleIcon.Position = UDim2.new(0.3, -35, 0.5, -14) -- Смещаем левее
     
-    -- Кнопка закрытия
-    local closeButton, closeGlow = createRoundButton("CloseButton", UDim2.new(0, 32, 0, 32), UDim2.new(1, -36, 0.5, -16), titleBar)
+    -- Кнопка закрытия - исправляем позиционирование
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 32, 0, 32)
+    closeButton.Position = UDim2.new(1, -40, 0.5, -16) -- Фиксированная позиция справа
     closeButton.BackgroundColor3 = currentTheme.Error
+    closeButton.BorderSizePixel = 0
+    closeButton.Text = "×"
+    closeButton.TextColor3 = currentTheme.Text
+    closeButton.TextSize = 20
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.ZIndex = 5
+    closeButton.Parent = titleBar
     
-    local closeLabel = createIcon("×", 24, closeButton)
-    closeLabel.Position = UDim2.new(0.5, -12, 0.5, -12)
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, CONFIG.CornerRadius)
+    closeCorner.Parent = closeButton
+    
+    local closeStroke = Instance.new("UIStroke")
+    closeStroke.Color = currentTheme.Border
+    closeStroke.Thickness = 1.5
+    closeStroke.Transparency = 0.3
+    closeStroke.Parent = closeButton
+    
+    -- Анимации для кнопки закрытия
+    closeButton.MouseEnter:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(CONFIG.AnimationDuration), {
+            BackgroundColor3 = Color3.fromRGB(255, 80, 80),
+            Size = UDim2.new(0, 34, 0, 34)
+        }):Play()
+        TweenService:Create(closeStroke, TweenInfo.new(CONFIG.AnimationDuration), {
+            Transparency = 0
+        }):Play()
+    end)
+    
+    closeButton.MouseLeave:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(CONFIG.AnimationDuration), {
+            BackgroundColor3 = currentTheme.Error,
+            Size = UDim2.new(0, 32, 0, 32)
+        }):Play()
+        TweenService:Create(closeStroke, TweenInfo.new(CONFIG.AnimationDuration), {
+            Transparency = 0.3
+        }):Play()
+    end)
     
     closeButton.MouseButton1Click:Connect(function()
         toggleGUI()
@@ -644,17 +682,24 @@ local function createWindow(title, size, position)
     local dragging = false
     local dragInput, dragStart, startPos
     
+    local function updateDrag(input)
+        if dragging then
+            local delta = input.Position - dragStart
+            mainWindow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end
+    
     titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = mainWindow.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
+        if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) and input.UserInputState == Enum.UserInputState.Begin then
+            if input.Position.X < closeButton.AbsolutePosition.X then -- Не начинать перетаскивание при клике на кнопку закрытия
+                dragging = true
+                dragStart = input.Position
+                startPos = mainWindow.Position
+                
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragInput = input
                 end
-            end)
+            end
         end
     end)
     
@@ -666,8 +711,13 @@ local function createWindow(title, size, position)
     
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            mainWindow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            updateDrag(input)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
         end
     end)
     
@@ -681,12 +731,13 @@ local function createWindow(title, size, position)
         local tabIcon = tabConfig.Icon or "📄"
         local tabId = #tabContents + 1
         
-        -- Создаем кнопку таба
+        -- Создаем кнопку таба - исправляем позиционирование
         local tabButton, tabGlow = createRoundButton("TabButton", UDim2.new(0, 100, 0, 36), UDim2.new(0, 12 + (105 * (#tabContents)), 0, 6), titleBar)
         tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
         
         local tabIconLabel = createIcon(tabIcon, 20, tabButton)
         tabIconLabel.Position = UDim2.new(0, 10, 0.5, -10)
+        tabIconLabel.TextColor3 = currentTheme.Text
         
         local tabButtonLabel = Instance.new("TextLabel")
         tabButtonLabel.Size = UDim2.new(1, -35, 1, 0)
@@ -801,6 +852,19 @@ end
 
 -- Создаем кнопку для мобильных устройств
 if isMobile then
+    local mobileGui = Instance.new("ScreenGui")
+    mobileGui.Name = "MobileToggleGUI_" .. HttpService:GenerateGUID(false)
+    mobileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    if syn and syn.protect_gui then
+        syn.protect_gui(mobileGui)
+        mobileGui.Parent = game:GetService("CoreGui")
+    elseif gethui then
+        mobileGui.Parent = gethui()
+    else
+        mobileGui.Parent = game:GetService("CoreGui")
+    end
+    
     mobileToggleButton = Instance.new("TextButton")
     mobileToggleButton.Name = "MobileToggleButton"
     mobileToggleButton.Size = UDim2.new(0, 70, 0, 70)
@@ -813,6 +877,7 @@ if isMobile then
     mobileToggleButton.Font = Enum.Font.GothamBold
     mobileToggleButton.ZIndex = 100
     mobileToggleButton.Visible = true
+    mobileToggleButton.Parent = mobileGui
     
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 35)
@@ -822,22 +887,6 @@ if isMobile then
     stroke.Color = currentTheme.Border
     stroke.Thickness = 3
     stroke.Parent = mobileToggleButton
-    
-    -- Защита GUI
-    local mobileGui = Instance.new("ScreenGui")
-    mobileGui.Name = "MobileToggleGUI"
-    mobileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
-    if syn and syn.protect_gui then
-        syn.protect_gui(mobileGui)
-        mobileGui.Parent = game:GetService("CoreGui")
-    elseif gethui then
-        mobileGui.Parent = gethui()
-    else
-        mobileGui.Parent = game:GetService("CoreGui")
-    end
-    
-    mobileToggleButton.Parent = mobileGui
     
     mobileToggleButton.MouseButton1Click:Connect(function()
         toggleGUI()
