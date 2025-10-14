@@ -285,7 +285,7 @@ local function createWindow(title, size, position)
     -- Название окна справа
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0.4, 0, 0, 0)
+    titleLabel.Position = UDim2.new(0.3, 0, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
