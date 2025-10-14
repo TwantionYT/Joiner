@@ -806,13 +806,89 @@ local function createWindow(title, size, position)
         ScreenGui = screenGui
     }
 end
-
 -- Глобальная функция для переключения GUI
 function toggleGUI()
     if currentWindow then
         local currentState = currentWindow.ScreenGui.Enabled
         currentWindow.SetVisible(not currentState)
     end
+end
+-- Определяем тип устройства
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local isConsole = UserInputService.GamepadEnabled and not UserInputService.KeyboardEnabled
+
+-- Создаем кнопку для мобильных устройств
+local mobileToggleButton
+if isMobile then
+    mobileToggleButton = Instance.new("TextButton")
+    mobileToggleButton.Name = "MobileToggleButton"
+    mobileToggleButton.Size = UDim2.new(0, 60, 0, 60)
+    mobileToggleButton.Position = UDim2.new(1, -70, 1, -70)
+    mobileToggleButton.BackgroundColor3 = currentTheme.Accent
+    mobileToggleButton.BorderSizePixel = 0
+    mobileToggleButton.Text = "⚡"
+    mobileToggleButton.TextColor3 = currentTheme.Text
+    mobileToggleButton.TextSize = 24
+    mobileToggleButton.Font = Enum.Font.GothamBold
+    mobileToggleButton.ZIndex = 100
+    mobileToggleButton.Visible = true
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 30)
+    corner.Parent = mobileToggleButton
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 2
+    stroke.Parent = mobileToggleButton
+    
+    -- Защита GUI
+    local mobileGui = Instance.new("ScreenGui")
+    mobileGui.Name = "MobileToggleGUI"
+    mobileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    if syn and syn.protect_gui then
+        syn.protect_gui(mobileGui)
+        mobileGui.Parent = game:GetService("CoreGui")
+    elseif gethui then
+        mobileGui.Parent = gethui()
+    else
+        mobileGui.Parent = game:GetService("CoreGui")
+    end
+    
+    mobileToggleButton.Parent = mobileGui
+    
+    -- Анимации при наведении
+    mobileToggleButton.MouseEnter:Connect(function()
+        TweenService:Create(mobileToggleButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = currentTheme.ButtonHover,
+            Size = UDim2.new(0, 65, 0, 65)
+        }):Play()
+    end)
+    
+    mobileToggleButton.MouseLeave:Connect(function()
+        TweenService:Create(mobileToggleButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = currentTheme.Accent,
+            Size = UDim2.new(0, 60, 0, 60)
+        }):Play()
+    end)
+    
+    mobileToggleButton.MouseButton1Click:Connect(function()
+        toggleGUI()
+    end)
+    
+    print("📱 Мобильная кнопка активирована")
+end
+
+-- Обработчик клавиши Alt (только для ПК)
+if not isMobile then
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
+            toggleGUI()
+        end
+    end)
 end
 
 -- Обработчик клавиши Alt
