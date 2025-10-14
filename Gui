@@ -138,12 +138,73 @@ local function createToggle(text, size, position, parent, callback, default)
     end
 end
 
+-- Функция для создания текстовых полей
+local function createTextField(text, size, position, parent, callback, default)
+    local textField = createRoundFrame("TextField", size, position, parent)
+    textField.BackgroundColor3 = currentTheme.Secondary
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.Size = UDim2.new(0.3, 0, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = currentTheme.Text
+    label.TextSize = 12
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = textField
+    
+    local input = Instance.new("TextBox")
+    input.Name = "Input"
+    input.Size = UDim2.new(0.65, -15, 0.7, 0)
+    input.Position = UDim2.new(0.35, 5, 0.15, 0)
+    input.BackgroundColor3 = currentTheme.Main
+    input.TextColor3 = currentTheme.Text
+    input.Text = default or ""
+    input.TextSize = 12
+    input.Font = Enum.Font.Gotham
+    input.PlaceholderText = text
+    input.Parent = textField
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = input
+    
+    input.FocusLost:Connect(function()
+        if callback then
+            callback(input.Text)
+        end
+    end)
+    
+    local textFieldLibrary = {}
+    
+    function textFieldLibrary:SetText(value)
+        input.Text = value
+    end
+    
+    function textFieldLibrary:GetText()
+        return input.Text
+    end
+    
+    return textField, textFieldLibrary
+end
+
 -- Создание главного окна
 local function createWindow(title, size, position)
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = title
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    screenGui.Parent = game:GetService("CoreGui")
+    
+    -- Защита GUI для разных экзекуторов
+    if syn and syn.protect_gui then
+        syn.protect_gui(screenGui)
+        screenGui.Parent = game:GetService("CoreGui")
+    elseif gethui then
+        screenGui.Parent = gethui()
+    else
+        screenGui.Parent = game:GetService("CoreGui")
+    end
     
     local mainWindow = createRoundFrame("MainWindow", size, position, screenGui)
     mainWindow.ClipsDescendants = true
@@ -235,17 +296,105 @@ local function createWindow(title, size, position)
         end
     end)
     
-    return {
-        ScreenGui = screenGui,
-        MainWindow = mainWindow,
-        Content = scrollingFrame,
+    local tabSystem = {}
+    local currentTab = nil
+    local tabButtons = {}
+    local tabContents = {}
+    
+    function tabSystem.New(tabConfig)
+        local tabTitle = tabConfig.Title or "Tab"
+        local tabId = #tabContents + 1
         
-        addButton = function(self, text, callback)
-            return createButton(text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), self.Content, callback)
-        end,
+        -- Создаем кнопку таба
+        local tabButton = createButton(tabTitle, UDim2.new(0, 80, 0, 30), UDim2.new(0, 10 + (90 * (#tabContents)), 0, 5), titleBar, function()
+            -- Показываем только выбранный таб
+            for i, content in ipairs(tabContents) do
+                content.Visible = (i == tabId)
+            end
+            -- Обновляем стиль кнопок
+            for i, btn in ipairs(tabButtons) do
+                btn.BackgroundColor3 = (i == tabId) and currentTheme.Accent or currentTheme.Button
+            end
+            currentTab = tabId
+        end)
         
-        addToggle = function(self, text, callback, default)
-            return createToggle(text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), self.Content, callback, default)
+        tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
+        
+        -- Создаем контент таба
+        local tabContent = Instance.new("ScrollingFrame")
+        tabContent.Name = tabTitle
+        tabContent.Size = UDim2.new(1, 0, 1, 0)
+        tabContent.Position = UDim2.new(0, 0, 0, 0)
+        tabContent.BackgroundTransparency = 1
+        tabContent.BorderSizePixel = 0
+        tabContent.ScrollBarThickness = 6
+        tabContent.ScrollBarImageColor3 = currentTheme.Accent
+        tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        tabContent.Visible = (#tabContents == 0)
+        tabContent.Parent = scrollingFrame
+        
+        local tabListLayout = Instance.new("UIListLayout")
+        tabListLayout.Padding = UDim.new(0, 10)
+        tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        tabListLayout.Parent = tabContent
+        
+        tabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            tabContent.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 10)
+        end)
+        
+        table.insert(tabButtons, tabButton)
+        table.insert(tabContents, tabContent)
+        
+        if #tabContents == 1 then
+            currentTab = 1
         end
+        
+        local optionLibrary = {}
+        
+        function optionLibrary.Button(buttonConfig)
+            return createButton(buttonConfig.Text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), tabContent, buttonConfig.Callback)
+        end
+        
+        function optionLibrary.Toggle(toggleConfig)
+            return createToggle(toggleConfig.Text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled)
+        end
+        
+        function optionLibrary.TextField(textFieldConfig)
+            return createTextField(textFieldConfig.Text, UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText)
+        end
+        
+        return optionLibrary
+    end
+    
+    return tabSystem
+end
+
+-- Создаем Material-совместимый интерфейс
+local Material = {}
+
+function Material.Load(config)
+    local title = config.Title or "MaterialLua"
+    local sizeX = config.SizeX or 500
+    local sizeY = config.SizeY or 400
+    local theme = config.Theme or "Dark"
+    local position = config.Position or UDim2.new(0, 30, 0, 30)
+    
+    -- Устанавливаем тему
+    if theme == "Light" then
+        currentTheme = Themes.Light
+    else
+        currentTheme = Themes.Dark
+    end
+    
+    local window = createWindow(title, UDim2.new(0, sizeX, 0, sizeY), position)
+    
+    -- Возвращаем совместимый с MaterialLua интерфейс
+    return {
+        New = function(tabConfig)
+            return window.New(tabConfig)
+        end,
+        Object = window -- для совместимости
     }
 end
+
+return Material
