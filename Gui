@@ -587,10 +587,10 @@ local function createWindow(title, size, position)
     })
     titleGradient.Parent = titleBar
     
-    -- Название окна в правом углу
+    -- Название окна - сдвинуто левее
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0.4, 0, 0, 0)
+    titleLabel.Size = UDim2.new(0.7, 0, 1, 0) -- Увеличиваем ширину для смещения левее
+    titleLabel.Position = UDim2.new(0.3, 0, 0, 0) -- Смещаем левее (было 0.4)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
@@ -600,9 +600,9 @@ local function createWindow(title, size, position)
     titleLabel.ZIndex = 4
     titleLabel.Parent = titleBar
     
-    -- Иконка рядом с названием
+    -- Иконка рядом с названием - тоже сдвигаем левее
     local titleIcon = createIcon("⚡", 28, titleBar)
-    titleIcon.Position = UDim2.new(0.4, -35, 0.5, -14)
+    titleIcon.Position = UDim2.new(0.3, -35, 0.5, -14) -- Смещаем левее (было 0.4)
     
     -- Кнопка закрытия
     local closeButton, closeGlow = createRoundButton("CloseButton", UDim2.new(0, 32, 0, 32), UDim2.new(1, -36, 0.5, -16), titleBar)
