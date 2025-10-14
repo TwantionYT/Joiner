@@ -2,44 +2,158 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
--- Улучшенные цветовые темы
+-- Расширенные цветовые темы с градиентами
 local Themes = {
     Dark = {
-        Main = Color3.fromRGB(30, 30, 35),
-        Secondary = Color3.fromRGB(45, 45, 50),
-        Accent = Color3.fromRGB(100, 70, 255),
+        Name = "Dark",
+        Main = Color3.fromRGB(25, 25, 30),
+        Secondary = Color3.fromRGB(35, 35, 45),
+        Accent = Color3.fromRGB(120, 80, 255),
         Text = Color3.fromRGB(240, 240, 245),
-        Button = Color3.fromRGB(60, 60, 70),
-        ButtonHover = Color3.fromRGB(80, 80, 90),
-        Border = Color3.fromRGB(70, 70, 80)
+        Button = Color3.fromRGB(50, 50, 60),
+        ButtonHover = Color3.fromRGB(70, 70, 85),
+        Border = Color3.fromRGB(60, 60, 75),
+        Success = Color3.fromRGB(85, 200, 100),
+        Warning = Color3.fromRGB(255, 180, 60),
+        Error = Color3.fromRGB(220, 80, 80)
     },
     Light = {
-        Main = Color3.fromRGB(250, 250, 252),
-        Secondary = Color3.fromRGB(235, 235, 240),
-        Accent = Color3.fromRGB(0, 100, 200),
-        Text = Color3.fromRGB(20, 20, 25),
-        Button = Color3.fromRGB(220, 220, 225),
-        ButtonHover = Color3.fromRGB(200, 200, 210),
-        Border = Color3.fromRGB(180, 180, 190)
+        Name = "Light", 
+        Main = Color3.fromRGB(245, 245, 250),
+        Secondary = Color3.fromRGB(230, 230, 240),
+        Accent = Color3.fromRGB(0, 120, 215),
+        Text = Color3.fromRGB(20, 20, 30),
+        Button = Color3.fromRGB(210, 210, 220),
+        ButtonHover = Color3.fromRGB(190, 190, 205),
+        Border = Color3.fromRGB(170, 170, 185),
+        Success = Color3.fromRGB(65, 180, 80),
+        Warning = Color3.fromRGB(230, 150, 40),
+        Error = Color3.fromRGB(200, 70, 70)
     },
     Aqua = {
-        Main = Color3.fromRGB(20, 35, 50),
-        Secondary = Color3.fromRGB(30, 50, 70),
-        Accent = Color3.fromRGB(0, 180, 230),
+        Name = "Aqua",
+        Main = Color3.fromRGB(15, 30, 45),
+        Secondary = Color3.fromRGB(25, 45, 65),
+        Accent = Color3.fromRGB(0, 200, 255),
         Text = Color3.fromRGB(220, 240, 255),
-        Button = Color3.fromRGB(40, 65, 90),
-        ButtonHover = Color3.fromRGB(50, 85, 120),
-        Border = Color3.fromRGB(0, 140, 180)
+        Button = Color3.fromRGB(35, 60, 85),
+        ButtonHover = Color3.fromRGB(45, 80, 115),
+        Border = Color3.fromRGB(0, 160, 210),
+        Success = Color3.fromRGB(0, 220, 180),
+        Warning = Color3.fromRGB(255, 200, 80),
+        Error = Color3.fromRGB(255, 100, 120)
+    },
+    Neon = {
+        Name = "Neon",
+        Main = Color3.fromRGB(10, 15, 25),
+        Secondary = Color3.fromRGB(20, 25, 40),
+        Accent = Color3.fromRGB(255, 0, 255),
+        Text = Color3.fromRGB(255, 255, 255),
+        Button = Color3.fromRGB(40, 30, 60),
+        ButtonHover = Color3.fromRGB(60, 40, 90),
+        Border = Color3.fromRGB(180, 0, 180),
+        Success = Color3.fromRGB(0, 255, 170),
+        Warning = Color3.fromRGB(255, 255, 0),
+        Error = Color3.fromRGB(255, 50, 50)
+    },
+    Forest = {
+        Name = "Forest",
+        Main = Color3.fromRGB(20, 35, 25),
+        Secondary = Color3.fromRGB(30, 50, 35),
+        Accent = Color3.fromRGB(80, 200, 120),
+        Text = Color3.fromRGB(230, 245, 230),
+        Button = Color3.fromRGB(40, 70, 50),
+        ButtonHover = Color3.fromRGB(50, 90, 65),
+        Border = Color3.fromRGB(60, 150, 90),
+        Success = Color3.fromRGB(100, 220, 140),
+        Warning = Color3.fromRGB(255, 200, 80),
+        Error = Color3.fromRGB(220, 100, 100)
+    },
+    Sunset = {
+        Name = "Sunset",
+        Main = Color3.fromRGB(45, 25, 35),
+        Secondary = Color3.fromRGB(65, 35, 50),
+        Accent = Color3.fromRGB(255, 100, 50),
+        Text = Color3.fromRGB(255, 230, 220),
+        Button = Color3.fromRGB(75, 45, 60),
+        ButtonHover = Color3.fromRGB(95, 55, 75),
+        Border = Color3.fromRGB(200, 80, 40),
+        Success = Color3.fromRGB(255, 180, 60),
+        Warning = Color3.fromRGB(255, 140, 80),
+        Error = Color3.fromRGB(220, 80, 100)
     }
+}
+
+-- Конфигурация
+local CONFIG = {
+    CornerRadius = 12,
+    AnimationDuration = 0.2,
+    BlurIntensity = 8
 }
 
 local currentTheme = Themes.Dark
 local currentWindow = nil
+local themeHistory = {Themes.Dark}
 
--- Функция для создания скругленных кнопок
+-- Функция для применения темы ко всем элементам
+local function applyTheme(theme)
+    currentTheme = theme
+    table.insert(themeHistory, theme)
+    if #themeHistory > 5 then
+        table.remove(themeHistory, 1)
+    end
+end
+
+-- Функция для создания свечения
+local function createGlow(parent, color, sizeIncrease)
+    local glow = Instance.new("Frame")
+    glow.Name = "Glow"
+    glow.Size = UDim2.new(1, sizeIncrease or 8, 1, sizeIncrease or 8)
+    glow.Position = UDim2.new(0, -(sizeIncrease or 8)/2, 0, -(sizeIncrease or 8)/2)
+    glow.BackgroundColor3 = color
+    glow.BorderSizePixel = 0
+    glow.ZIndex = 1
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, CONFIG.CornerRadius + 2)
+    corner.Parent = glow
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 90
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.8),
+        NumberSequenceKeypoint.new(0.5, 0.4),
+        NumberSequenceKeypoint.new(1, 0.9)
+    })
+    gradient.Parent = glow
+    
+    glow.Parent = parent
+    return glow
+end
+
+-- Функция для создания иконок
+local function createIcon(icon, size, parent)
+    local iconLabel = Instance.new("TextLabel")
+    iconLabel.Size = UDim2.new(0, size, 0, size)
+    iconLabel.BackgroundTransparency = 1
+    iconLabel.Text = icon
+    iconLabel.TextColor3 = currentTheme.Text
+    iconLabel.TextSize = size - 4
+    iconLabel.Font = Enum.Font.GothamBold
+    iconLabel.ZIndex = 5
+    
+    if parent then
+        iconLabel.Parent = parent
+    end
+    
+    return iconLabel
+end
+
+-- Улучшенная функция для создания скругленных кнопок
 local function createRoundButton(name, size, position, parent)
     local button = Instance.new("TextButton")
     button.Name = name
@@ -49,25 +163,54 @@ local function createRoundButton(name, size, position, parent)
     button.BorderSizePixel = 0
     button.Text = ""
     button.AutoButtonColor = false
-    button.ZIndex = 3
+    button.ZIndex = 4
+    button.ClipsDescendants = true
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
+    corner.CornerRadius = UDim.new(0, CONFIG.CornerRadius)
     corner.Parent = button
     
     local stroke = Instance.new("UIStroke")
     stroke.Color = currentTheme.Border
-    stroke.Thickness = 1
+    stroke.Thickness = 1.5
+    stroke.Transparency = 0.3
     stroke.Parent = button
+    
+    -- Эффект свечения
+    local glow = createGlow(button, currentTheme.Accent, 6)
+    glow.Visible = false
     
     if parent then
         button.Parent = parent
     end
     
-    return button
+    -- Анимации
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(CONFIG.AnimationDuration), {
+            BackgroundColor3 = currentTheme.ButtonHover,
+            Size = size + UDim2.new(0, 2, 0, 2)
+        }):Play()
+        TweenService:Create(stroke, TweenInfo.new(CONFIG.AnimationDuration), {
+            Transparency = 0
+        }):Play()
+        glow.Visible = true
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(CONFIG.AnimationDuration), {
+            BackgroundColor3 = currentTheme.Button,
+            Size = size
+        }):Play()
+        TweenService:Create(stroke, TweenInfo.new(CONFIG.AnimationDuration), {
+            Transparency = 0.3
+        }):Play()
+        glow.Visible = false
+    end)
+    
+    return button, glow
 end
 
--- Функция для создания скругленных фреймов
+-- Улучшенная функция для создания скругленных фреймов
 local function createRoundFrame(name, size, position, parent)
     local frame = Instance.new("Frame")
     frame.Name = name
@@ -75,16 +218,24 @@ local function createRoundFrame(name, size, position, parent)
     frame.Position = position
     frame.BackgroundColor3 = currentTheme.Main
     frame.BorderSizePixel = 0
-    frame.ZIndex = 2
+    frame.ZIndex = 3
+    frame.ClipsDescendants = true
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
+    corner.CornerRadius = UDim.new(0, CONFIG.CornerRadius)
     corner.Parent = frame
     
     local stroke = Instance.new("UIStroke")
     stroke.Color = currentTheme.Border
-    stroke.Thickness = 1
+    stroke.Thickness = 1.5
+    stroke.Transparency = 0.2
     stroke.Parent = frame
+    
+    -- Градиентный фон
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 45
+    gradient.Transparency = NumberSequence.new(0.1)
+    gradient.Parent = frame
     
     if parent then
         frame.Parent = parent
@@ -93,36 +244,76 @@ local function createRoundFrame(name, size, position, parent)
     return frame
 end
 
--- Функция для создания кнопок
-local function createButton(text, size, position, parent, callback)
-    local button = createRoundButton("Button", size, position, parent)
+-- Функция для создания карточек
+local function createCard(size, position, parent)
+    local card = createRoundFrame("Card", size, position, parent)
+    card.BackgroundColor3 = currentTheme.Secondary
+    
+    local innerGlow = Instance.new("Frame")
+    innerGlow.Size = UDim2.new(1, 0, 1, 0)
+    innerGlow.Position = UDim2.new(0, 0, 0, 0)
+    innerGlow.BackgroundColor3 = Color3.new(1, 1, 1)
+    innerGlow.BorderSizePixel = 0
+    innerGlow.ZIndex = 4
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, CONFIG.CornerRadius)
+    corner.Parent = innerGlow
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.9),
+        NumberSequenceKeypoint.new(0.3, 0.95),
+        NumberSequenceKeypoint.new(1, 0.98)
+    })
+    gradient.Parent = innerGlow
+    
+    innerGlow.Parent = card
+    
+    return card
+end
+
+-- Улучшенная функция для создания кнопок
+local function createButton(text, size, position, parent, callback, icon)
+    local button, glow = createRoundButton("Button", size, position, parent)
+    
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Size = UDim2.new(1, 0, 1, 0)
+    contentFrame.Position = UDim2.new(0, 0, 0, 0)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.ZIndex = 5
+    contentFrame.Parent = button
+    
+    if icon then
+        local iconLabel = createIcon(icon, 20, contentFrame)
+        iconLabel.Position = UDim2.new(0, 12, 0.5, -10)
+        iconLabel.TextColor3 = currentTheme.Text
+    end
     
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(1, -20, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
+    label.Size = UDim2.new(1, icon and -40 or -20, 1, 0)
+    label.Position = UDim2.new(0, icon and 40 or 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = currentTheme.Text
     label.TextSize = 13
-    label.Font = Enum.Font.Gotham
+    label.Font = Enum.Font.GothamSemibold
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 4
-    label.Parent = button
+    label.ZIndex = 5
+    label.Parent = contentFrame
     
-    -- Анимации при наведении
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = currentTheme.ButtonHover}):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = currentTheme.Button}):Play()
-    end)
-    
+    -- Анимация клика
     button.MouseButton1Click:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = currentTheme.Accent}):Play()
-        task.wait(0.1)
-        TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = currentTheme.ButtonHover}):Play()
+        -- Пульсация
+        TweenService:Create(glow, TweenInfo.new(0.1), {
+            Size = UDim2.new(1, 20, 1, 20),
+            Position = UDim2.new(0, -10, 0, -10)
+        }):Play()
+        TweenService:Create(glow, TweenInfo.new(0.2), {
+            Size = UDim2.new(1, 6, 1, 6),
+            Position = UDim2.new(0, -3, 0, -3)
+        }):Play()
         
         if callback then
             callback()
@@ -132,49 +323,64 @@ local function createButton(text, size, position, parent, callback)
     return button
 end
 
--- Функция для создания переключателей
-local function createToggle(text, size, position, parent, callback, default)
-    local toggleButton = createRoundButton("Toggle", size, position, parent)
+-- Улучшенная функция для создания переключателей
+local function createToggle(text, size, position, parent, callback, default, icon)
+    local toggleButton, glow = createRoundButton("Toggle", size, position, parent)
     toggleButton.BackgroundColor3 = currentTheme.Secondary
+    
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Size = UDim2.new(1, 0, 1, 0)
+    contentFrame.Position = UDim2.new(0, 0, 0, 0)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.ZIndex = 5
+    contentFrame.Parent = toggleButton
+    
+    if icon then
+        local iconLabel = createIcon(icon, 18, contentFrame)
+        iconLabel.Position = UDim2.new(0, 12, 0.5, -9)
+        iconLabel.TextColor3 = currentTheme.Text
+    end
     
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Position = UDim2.new(0, 12, 0, 0)
+    label.Size = UDim2.new(0.6, icon and -40 or -20, 1, 0)
+    label.Position = UDim2.new(0, icon and 40 or 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = currentTheme.Text
     label.TextSize = 13
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 4
-    label.Parent = toggleButton
+    label.ZIndex = 5
+    label.Parent = contentFrame
     
-    local toggleContainer = createRoundFrame("ToggleContainer", UDim2.new(0, 45, 0, 22), UDim2.new(1, -52, 0.5, -11), toggleButton)
+    local toggleContainer = createRoundFrame("ToggleContainer", UDim2.new(0, 50, 0, 26), UDim2.new(1, -58, 0.5, -13), contentFrame)
     toggleContainer.BackgroundColor3 = currentTheme.Main
-    toggleContainer.ZIndex = 4
+    toggleContainer.ZIndex = 5
     
-    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 16, 0, 16), UDim2.new(0, 3, 0.5, -8), toggleContainer)
+    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 20, 0, 20), UDim2.new(0, 3, 0.5, -10), toggleContainer)
     toggleDot.BackgroundColor3 = currentTheme.Text
-    toggleDot.ZIndex = 5
+    toggleDot.ZIndex = 6
     
     local isToggled = default or false
     
     local function updateToggle()
         if isToggled then
-            TweenService:Create(toggleDot, TweenInfo.new(0.2), {
-                Position = UDim2.new(1, -19, 0.5, -8)
+            TweenService:Create(toggleDot, TweenInfo.new(CONFIG.AnimationDuration, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Position = UDim2.new(1, -23, 0.5, -10)
             }):Play()
-            TweenService:Create(toggleContainer, TweenInfo.new(0.2), {
+            TweenService:Create(toggleContainer, TweenInfo.new(CONFIG.AnimationDuration), {
                 BackgroundColor3 = currentTheme.Accent
             }):Play()
+            glow.Visible = true
         else
-            TweenService:Create(toggleDot, TweenInfo.new(0.2), {
-                Position = UDim2.new(0, 3, 0.5, -8)
+            TweenService:Create(toggleDot, TweenInfo.new(CONFIG.AnimationDuration, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, 3, 0.5, -10)
             }):Play()
-            TweenService:Create(toggleContainer, TweenInfo.new(0.2), {
+            TweenService:Create(toggleContainer, TweenInfo.new(CONFIG.AnimationDuration), {
                 BackgroundColor3 = currentTheme.Main
             }):Play()
+            glow.Visible = false
         end
     end
     
@@ -194,32 +400,45 @@ local function createToggle(text, size, position, parent, callback, default)
     end
 end
 
--- Функция для создания текстовых полей
-local function createTextField(text, size, position, parent, callback, default)
+-- Улучшенная функция для создания текстовых полей
+local function createTextField(text, size, position, parent, callback, default, icon)
     local textField = createRoundFrame("TextField", size, position, parent)
     textField.BackgroundColor3 = currentTheme.Secondary
     
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Size = UDim2.new(1, 0, 1, 0)
+    contentFrame.Position = UDim2.new(0, 0, 0, 0)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.ZIndex = 4
+    contentFrame.Parent = textField
+    
+    if icon then
+        local iconLabel = createIcon(icon, 18, contentFrame)
+        iconLabel.Position = UDim2.new(0, 12, 0.5, -9)
+        iconLabel.TextColor3 = currentTheme.Text
+    end
+    
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(0.35, 0, 1, 0)
-    label.Position = UDim2.new(0, 12, 0, 0)
+    label.Size = UDim2.new(0.35, icon and -40 or -20, 1, 0)
+    label.Position = UDim2.new(0, icon and 40 or 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = currentTheme.Text
     label.TextSize = 12
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 3
-    label.Parent = textField
+    label.ZIndex = 4
+    label.Parent = contentFrame
     
-    local inputContainer = createRoundFrame("InputContainer", UDim2.new(0.6, -15, 0.6, 0), UDim2.new(0.4, 5, 0.2, 0), textField)
+    local inputContainer = createRoundFrame("InputContainer", UDim2.new(0.6, -15, 0.6, 0), UDim2.new(0.4, 5, 0.2, 0), contentFrame)
     inputContainer.BackgroundColor3 = currentTheme.Main
-    inputContainer.ZIndex = 3
+    inputContainer.ZIndex = 4
     
     local input = Instance.new("TextBox")
     input.Name = "Input"
-    input.Size = UDim2.new(1, -8, 1, 0)
-    input.Position = UDim2.new(0, 4, 0, 0)
+    input.Size = UDim2.new(1, -12, 1, 0)
+    input.Position = UDim2.new(0, 6, 0, 0)
     input.BackgroundTransparency = 1
     input.TextColor3 = currentTheme.Text
     input.Text = default or ""
@@ -227,19 +446,24 @@ local function createTextField(text, size, position, parent, callback, default)
     input.Font = Enum.Font.Gotham
     input.PlaceholderText = "Введите..."
     input.PlaceholderColor3 = Color3.new(0.6, 0.6, 0.6)
-    input.ZIndex = 4
+    input.ZIndex = 5
     input.Parent = inputContainer
     
+    local inputGlow = createGlow(inputContainer, currentTheme.Accent, 4)
+    inputGlow.Visible = false
+    
     input.Focused:Connect(function()
-        TweenService:Create(inputContainer, TweenInfo.new(0.2), {
+        TweenService:Create(inputContainer, TweenInfo.new(CONFIG.AnimationDuration), {
             BackgroundColor3 = currentTheme.Accent
         }):Play()
+        inputGlow.Visible = true
     end)
     
     input.FocusLost:Connect(function()
-        TweenService:Create(inputContainer, TweenInfo.new(0.2), {
+        TweenService:Create(inputContainer, TweenInfo.new(CONFIG.AnimationDuration), {
             BackgroundColor3 = currentTheme.Main
         }):Play()
+        inputGlow.Visible = false
         if callback then
             callback(input.Text)
         end
@@ -258,12 +482,75 @@ local function createTextField(text, size, position, parent, callback, default)
     return textField, textFieldLibrary
 end
 
+-- Функция для создания выбора темы
+local function createThemeSelector(parent)
+    local themeCard = createCard(UDim2.new(1, -16, 0, 120), UDim2.new(0, 8, 0, 0), parent)
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 24)
+    title.Position = UDim2.new(0, 12, 0, 8)
+    title.BackgroundTransparency = 1
+    title.Text = "🎨 Выбор темы"
+    title.TextColor3 = currentTheme.Text
+    title.TextSize = 14
+    title.Font = Enum.Font.GothamSemibold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 5
+    title.Parent = themeCard
+    
+    local themesContainer = Instance.new("Frame")
+    themesContainer.Size = UDim2.new(1, -20, 0, 80)
+    themesContainer.Position = UDim2.new(0, 10, 0, 35)
+    themesContainer.BackgroundTransparency = 1
+    themesContainer.ZIndex = 5
+    themesContainer.Parent = themeCard
+    
+    local layout = Instance.new("UIGridLayout")
+    layout.CellSize = UDim2.new(0, 70, 0, 30)
+    layout.CellPadding = UDim2.new(0, 8, 0, 8)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = themesContainer
+    
+    local themeButtons = {}
+    
+    for themeName, themeData in pairs(Themes) do
+        local themeButton, themeGlow = createRoundButton(themeName, UDim2.new(0, 70, 0, 30), UDim2.new(0, 0, 0, 0), themesContainer)
+        themeButton.BackgroundColor3 = themeData.Accent
+        
+        local themeLabel = Instance.new("TextLabel")
+        themeLabel.Size = UDim2.new(1, 0, 1, 0)
+        themeLabel.Position = UDim2.new(0, 0, 0, 0)
+        themeLabel.BackgroundTransparency = 1
+        themeLabel.Text = themeData.Name
+        themeLabel.TextColor3 = themeData.Text
+        themeLabel.TextSize = 11
+        themeLabel.Font = Enum.Font.Gotham
+        themeLabel.ZIndex = 5
+        themeLabel.Parent = themeButton
+        
+        themeGlow.Visible = (currentTheme.Name == themeData.Name)
+        
+        themeButton.MouseButton1Click:Connect(function()
+            applyTheme(themeData)
+            -- Обновляем видимость свечения для всех кнопок
+            for btnName, btnData in pairs(themeButtons) do
+                btnData.glow.Visible = (currentTheme.Name == btnName)
+            end
+        end)
+        
+        themeButtons[themeName] = {button = themeButton, glow = themeGlow}
+    end
+    
+    return themeCard
+end
+
 -- Создание главного окна
 local function createWindow(title, size, position)
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = title
+    screenGui.Name = "MaterialLua_" .. title
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    screenGui.Enabled = false -- Сначала скрыто
+    screenGui.Enabled = false
     
     -- Защита GUI
     if syn and syn.protect_gui then
@@ -275,47 +562,69 @@ local function createWindow(title, size, position)
         screenGui.Parent = game:GetService("CoreGui")
     end
     
-    local mainWindow = createRoundFrame("MainWindow", size, position, screenGui)
+    -- Фон с размытием
+    local backgroundBlur = Instance.new("BlurEffect")
+    backgroundBlur.Size = 0
+    backgroundBlur.Parent = game:GetService("Lighting")
+    
+    local mainWindow = createRoundFrame("MainWindow", UDim2.new(0, 0, 0, 0), position, screenGui)
     mainWindow.ClipsDescendants = true
     
+    -- Фон с градиентом
+    local backgroundGradient = Instance.new("UIGradient")
+    backgroundGradient.Rotation = 135
+    backgroundGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, currentTheme.Main),
+        ColorSequenceKeypoint.new(0.5, currentTheme.Secondary),
+        ColorSequenceKeypoint.new(1, currentTheme.Main)
+    })
+    backgroundGradient.Parent = mainWindow
+    
     -- Заголовок окна
-    local titleBar = createRoundFrame("TitleBar", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 0), mainWindow)
+    local titleBar = createRoundFrame("TitleBar", UDim2.new(1, 0, 0, 50), UDim2.new(0, 0, 0, 0), mainWindow)
     titleBar.BackgroundColor3 = currentTheme.Accent
     
-    -- Название окна справа
+    local titleGradient = Instance.new("UIGradient")
+    titleGradient.Rotation = 90
+    titleGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, currentTheme.Accent),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(
+            math.min(currentTheme.Accent.R * 255 + 20, 255),
+            math.min(currentTheme.Accent.G * 255 + 20, 255),
+            math.min(currentTheme.Accent.B * 255 + 20, 255)
+        ))
+    })
+    titleGradient.Parent = titleBar
+    
+    -- Иконка и название окна
+    local titleIcon = createIcon("⚡", 28, titleBar)
+    titleIcon.Position = UDim2.new(0, 15, 0.5, -14)
+    
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0.3, 0, 0, 0)
+    titleLabel.Position = UDim2.new(0, 55, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Right
-    titleLabel.ZIndex = 3
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 4
     titleLabel.Parent = titleBar
     
     -- Кнопка закрытия
-    local closeButton = createRoundButton("CloseButton", UDim2.new(0, 28, 0, 28), UDim2.new(1, -32, 0.5, -14), titleBar)
-    closeButton.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
+    local closeButton, closeGlow = createRoundButton("CloseButton", UDim2.new(0, 32, 0, 32), UDim2.new(1, -36, 0.5, -16), titleBar)
+    closeButton.BackgroundColor3 = currentTheme.Error
     
-    local closeLabel = Instance.new("TextLabel")
-    closeLabel.Size = UDim2.new(1, 0, 1, 0)
-    closeLabel.Position = UDim2.new(0, 0, 0, 0)
-    closeLabel.BackgroundTransparency = 1
-    closeLabel.Text = "×"
-    closeLabel.TextColor3 = currentTheme.Text
-    closeLabel.TextSize = 18
-    closeLabel.Font = Enum.Font.GothamBold
-    closeLabel.ZIndex = 4
-    closeLabel.Parent = closeButton
+    local closeLabel = createIcon("×", 24, closeButton)
+    closeLabel.Position = UDim2.new(0.5, -12, 0.5, -12)
     
     closeButton.MouseButton1Click:Connect(function()
-        toggleGUI() -- Используем функцию переключения
+        toggleGUI()
     end)
     
     -- Контентная область
-    local contentFrame = createRoundFrame("Content", UDim2.new(1, -16, 1, -56), UDim2.new(0, 8, 0, 48), mainWindow)
+    local contentFrame = createRoundFrame("Content", UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), mainWindow)
     contentFrame.BackgroundColor3 = currentTheme.Secondary
     
     local scrollingFrame = Instance.new("ScrollingFrame")
@@ -323,19 +632,20 @@ local function createWindow(title, size, position)
     scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
     scrollingFrame.BackgroundTransparency = 1
     scrollingFrame.BorderSizePixel = 0
-    scrollingFrame.ScrollBarThickness = 4
+    scrollingFrame.ScrollBarThickness = 6
     scrollingFrame.ScrollBarImageColor3 = currentTheme.Accent
+    scrollingFrame.ScrollBarImageTransparency = 0.7
     scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scrollingFrame.ZIndex = 3
+    scrollingFrame.ZIndex = 4
     scrollingFrame.Parent = contentFrame
     
     local uiListLayout = Instance.new("UIListLayout")
-    uiListLayout.Padding = UDim.new(0, 8)
+    uiListLayout.Padding = UDim.new(0, 12)
     uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     uiListLayout.Parent = scrollingFrame
     
     uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 16)
+        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 20)
     end)
     
     -- Перетаскивание окна
@@ -376,22 +686,28 @@ local function createWindow(title, size, position)
     
     function tabSystem.New(tabConfig)
         local tabTitle = tabConfig.Title or "Tab"
+        local tabIcon = tabConfig.Icon or "📄"
         local tabId = #tabContents + 1
         
         -- Создаем кнопку таба
-        local tabButton = createRoundButton("TabButton", UDim2.new(0, 90, 0, 32), UDim2.new(0, 10 + (95 * (#tabContents)), 0, 4), titleBar)
+        local tabButton, tabGlow = createRoundButton("TabButton", UDim2.new(0, 100, 0, 36), UDim2.new(0, 12 + (105 * (#tabContents)), 0, 6), titleBar)
         tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
         
+        local tabIconLabel = createIcon(tabIcon, 20, tabButton)
+        tabIconLabel.Position = UDim2.new(0, 10, 0.5, -10)
+        
         local tabButtonLabel = Instance.new("TextLabel")
-        tabButtonLabel.Size = UDim2.new(1, 0, 1, 0)
-        tabButtonLabel.Position = UDim2.new(0, 0, 0, 0)
+        tabButtonLabel.Size = UDim2.new(1, -35, 1, 0)
+        tabButtonLabel.Position = UDim2.new(0, 35, 0, 0)
         tabButtonLabel.BackgroundTransparency = 1
         tabButtonLabel.Text = tabTitle
         tabButtonLabel.TextColor3 = currentTheme.Text
         tabButtonLabel.TextSize = 12
         tabButtonLabel.Font = Enum.Font.Gotham
-        tabButtonLabel.ZIndex = 4
+        tabButtonLabel.ZIndex = 5
         tabButtonLabel.Parent = tabButton
+        
+        tabGlow.Visible = (#tabContents == 0)
         
         tabButton.MouseButton1Click:Connect(function()
             -- Показываем только выбранный таб
@@ -399,8 +715,9 @@ local function createWindow(title, size, position)
                 content.Visible = (i == tabId)
             end
             -- Обновляем стиль кнопок
-            for i, btn in ipairs(tabButtons) do
-                btn.BackgroundColor3 = (i == tabId) and currentTheme.Accent or currentTheme.Button
+            for i, btnData in ipairs(tabButtons) do
+                btnData.button.BackgroundColor3 = (i == tabId) and currentTheme.Accent or currentTheme.Button
+                btnData.glow.Visible = (i == tabId)
             end
             currentTab = tabId
         end)
@@ -412,23 +729,24 @@ local function createWindow(title, size, position)
         tabContent.Position = UDim2.new(0, 0, 0, 0)
         tabContent.BackgroundTransparency = 1
         tabContent.BorderSizePixel = 0
-        tabContent.ScrollBarThickness = 4
+        tabContent.ScrollBarThickness = 6
         tabContent.ScrollBarImageColor3 = currentTheme.Accent
+        tabContent.ScrollBarImageTransparency = 0.7
         tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
         tabContent.Visible = (#tabContents == 0)
-        tabContent.ZIndex = 3
+        tabContent.ZIndex = 4
         tabContent.Parent = scrollingFrame
         
         local tabListLayout = Instance.new("UIListLayout")
-        tabListLayout.Padding = UDim.new(0, 8)
+        tabListLayout.Padding = UDim.new(0, 12)
         tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         tabListLayout.Parent = tabContent
         
         tabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            tabContent.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 16)
+            tabContent.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 20)
         end)
         
-        table.insert(tabButtons, tabButton)
+        table.insert(tabButtons, {button = tabButton, glow = tabGlow})
         table.insert(tabContents, tabContent)
         
         if #tabContents == 1 then
@@ -438,15 +756,19 @@ local function createWindow(title, size, position)
         local optionLibrary = {}
         
         function optionLibrary.Button(buttonConfig)
-            return createButton(buttonConfig.Text, UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 0), tabContent, buttonConfig.Callback)
+            return createButton(buttonConfig.Text, UDim2.new(1, -16, 0, 42), UDim2.new(0, 8, 0, 0), tabContent, buttonConfig.Callback, buttonConfig.Icon)
         end
         
         function optionLibrary.Toggle(toggleConfig)
-            return createToggle(toggleConfig.Text, UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled)
+            return createToggle(toggleConfig.Text, UDim2.new(1, -16, 0, 42), UDim2.new(0, 8, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled, toggleConfig.Icon)
         end
         
         function optionLibrary.TextField(textFieldConfig)
-            return createTextField(textFieldConfig.Text, UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText)
+            return createTextField(textFieldConfig.Text, UDim2.new(1, -16, 0, 42), UDim2.new(0, 8, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText, textFieldConfig.Icon)
+        end
+        
+        function optionLibrary.ThemeSelector()
+            return createThemeSelector(tabContent)
         end
         
         return optionLibrary
@@ -456,15 +778,24 @@ local function createWindow(title, size, position)
     local function setVisible(visible)
         screenGui.Enabled = visible
         if visible then
-            mainWindow.Size = UDim2.new(0, 0, 0, 0)
-            TweenService:Create(mainWindow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            -- Анимация появления с размытием
+            TweenService:Create(backgroundBlur, TweenInfo.new(0.4), {
+                Size = CONFIG.BlurIntensity
+            }):Play()
+            
+            TweenService:Create(mainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 Size = size
             }):Play()
         else
-            TweenService:Create(mainWindow, TweenInfo.new(0.2), {
+            -- Анимация исчезновения
+            TweenService:Create(backgroundBlur, TweenInfo.new(0.3), {
+                Size = 0
+            }):Play()
+            
+            TweenService:Create(mainWindow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                 Size = UDim2.new(0, 0, 0, 0)
             }):Play()
-            task.wait(0.2)
+            task.wait(0.3)
             screenGui.Enabled = false
         end
     end
@@ -498,12 +829,12 @@ local Material = {}
 
 function Material.Load(config)
     local title = config.Title or "MaterialLua"
-    local sizeX = config.SizeX or 480
-    local sizeY = config.SizeY or 420
+    local sizeX = config.SizeX or 500
+    local sizeY = config.SizeY or 500
     local theme = config.Theme or "Dark"
     
-    -- Позиция сверху по центру
-    local position = UDim2.new(0.5, -sizeX/2, 0, 40)
+    -- Позиция по центру с небольшим смещением вверх
+    local position = UDim2.new(0.5, -sizeX/2, 0.4, -sizeY/2)
     
     currentTheme = Themes[theme] or Themes.Dark
     
