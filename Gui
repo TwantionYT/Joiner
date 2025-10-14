@@ -107,8 +107,8 @@ end
 
 -- Функция для создания переключателей
 local function createToggle(text, size, position, parent, callback, default)
-    local toggle = createRoundButton("Toggle", size, position, parent)
-    toggle.BackgroundColor3 = currentTheme.Secondary
+    local toggleButton = createRoundButton("Toggle", size, position, parent)
+    toggleButton.BackgroundColor3 = currentTheme.Secondary
     
     local label = Instance.new("TextLabel")
     label.Name = "Label"
@@ -120,12 +120,12 @@ local function createToggle(text, size, position, parent, callback, default)
     label.TextSize = 14
     label.Font = Enum.Font.GothamSemibold
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggle
+    label.Parent = toggleButton
     
-    local toggleButton = createRoundButton("ToggleButton", UDim2.new(0, 40, 0, 20), UDim2.new(1, -50, 0.5, -10), toggle)
-    toggleButton.BackgroundColor3 = currentTheme.Main
+    local toggleIndicator = createRoundFrame("ToggleIndicator", UDim2.new(0, 40, 0, 20), UDim2.new(1, -50, 0.5, -10), toggleButton)
+    toggleIndicator.BackgroundColor3 = currentTheme.Main
     
-    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 16, 0, 16), UDim2.new(0, 2, 0.5, -8), toggleButton)
+    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 16, 0, 16), UDim2.new(0, 2, 0.5, -8), toggleIndicator)
     toggleDot.BackgroundColor3 = currentTheme.Text
     
     local isToggled = default or false
@@ -133,16 +133,16 @@ local function createToggle(text, size, position, parent, callback, default)
     local function updateToggle()
         if isToggled then
             TweenService:Create(toggleDot, TweenInfo.new(0.2), {Position = UDim2.new(1, -18, 0.5, -8)}):Play()
-            TweenService:Create(toggleButton, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Accent}):Play()
+            TweenService:Create(toggleIndicator, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Accent}):Play()
         else
             TweenService:Create(toggleDot, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
-            TweenService:Create(toggleButton, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Main}):Play()
+            TweenService:Create(toggleIndicator, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Main}):Play()
         end
     end
     
     updateToggle()
     
-    toggle.MouseButton1Click:Connect(function()
+    toggleButton.MouseButton1Click:Connect(function()
         isToggled = not isToggled
         updateToggle()
         if callback then
@@ -150,7 +150,7 @@ local function createToggle(text, size, position, parent, callback, default)
         end
     end)
     
-    return toggle, function(state) 
+    return toggleButton, function(state) 
         isToggled = state 
         updateToggle() 
     end
@@ -408,12 +408,7 @@ function Material.Load(config)
     local theme = config.Theme or "Dark"
     local position = config.Position or UDim2.new(0, 30, 0, 30)
     
-    -- Устанавливаем тему
-    if theme == "Light" then
-        currentTheme = Themes.Light or Themes.Dark
-    else
-        currentTheme = Themes.Dark
-    end
+    currentTheme = Themes.Dark
     
     local window = createWindow(title, UDim2.new(0, sizeX, 0, sizeY), position)
     
@@ -421,8 +416,7 @@ function Material.Load(config)
     return {
         New = function(tabConfig)
             return window.New(tabConfig)
-        end,
-        Object = window -- для совместимости
+        end
     }
 end
 
