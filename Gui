@@ -602,13 +602,13 @@ local function createWindow(title, size, position)
     
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0, 55, 0, 0)
+    titleLabel.Position = UDim2.new(0.3, 55, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
     titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Right
     titleLabel.ZIndex = 4
     titleLabel.Parent = titleBar
     
