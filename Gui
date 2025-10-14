@@ -2,92 +2,44 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TextService = game:GetService("TextService")
 
 local player = Players.LocalPlayer
 
--- Расширенные цветовые темы
+-- Улучшенные цветовые темы
 local Themes = {
     Dark = {
-        Main = Color3.fromRGB(25, 25, 25),
-        Secondary = Color3.fromRGB(40, 40, 40),
-        Accent = Color3.fromRGB(124, 37, 255),
-        Text = Color3.fromRGB(255, 255, 255),
-        Button = Color3.fromRGB(60, 60, 60),
-        ButtonHover = Color3.fromRGB(80, 80, 80),
-        Border = Color3.fromRGB(70, 70, 70)
+        Main = Color3.fromRGB(30, 30, 35),
+        Secondary = Color3.fromRGB(45, 45, 50),
+        Accent = Color3.fromRGB(100, 70, 255),
+        Text = Color3.fromRGB(240, 240, 245),
+        Button = Color3.fromRGB(60, 60, 70),
+        ButtonHover = Color3.fromRGB(80, 80, 90),
+        Border = Color3.fromRGB(70, 70, 80)
     },
     Light = {
-        Main = Color3.fromRGB(245, 245, 245),
-        Secondary = Color3.fromRGB(230, 230, 230),
-        Accent = Color3.fromRGB(0, 120, 215),
-        Text = Color3.fromRGB(30, 30, 30),
-        Button = Color3.fromRGB(220, 220, 220),
-        ButtonHover = Color3.fromRGB(200, 200, 200),
-        Border = Color3.fromRGB(180, 180, 180)
+        Main = Color3.fromRGB(250, 250, 252),
+        Secondary = Color3.fromRGB(235, 235, 240),
+        Accent = Color3.fromRGB(0, 100, 200),
+        Text = Color3.fromRGB(20, 20, 25),
+        Button = Color3.fromRGB(220, 220, 225),
+        ButtonHover = Color3.fromRGB(200, 200, 210),
+        Border = Color3.fromRGB(180, 180, 190)
     },
     Aqua = {
-        Main = Color3.fromRGB(15, 30, 45),
-        Secondary = Color3.fromRGB(25, 45, 65),
-        Accent = Color3.fromRGB(0, 200, 255),
+        Main = Color3.fromRGB(20, 35, 50),
+        Secondary = Color3.fromRGB(30, 50, 70),
+        Accent = Color3.fromRGB(0, 180, 230),
         Text = Color3.fromRGB(220, 240, 255),
-        Button = Color3.fromRGB(35, 60, 85),
-        ButtonHover = Color3.fromRGB(45, 80, 115),
-        Border = Color3.fromRGB(0, 150, 200)
-    },
-    Rainbow = {
-        Main = Color3.fromRGB(20, 20, 30),
-        Secondary = Color3.fromRGB(30, 30, 45),
-        Accent = Color3.fromRGB(255, 0, 128),
-        Text = Color3.fromRGB(255, 255, 255),
-        Button = Color3.fromRGB(50, 50, 70),
-        ButtonHover = Color3.fromRGB(70, 70, 90),
-        Border = Color3.fromRGB(100, 100, 150)
-    },
-    Jester = {
-        Main = Color3.fromRGB(45, 15, 45),
-        Secondary = Color3.fromRGB(65, 25, 65),
-        Accent = Color3.fromRGB(255, 50, 150),
-        Text = Color3.fromRGB(255, 220, 240),
-        Button = Color3.fromRGB(85, 35, 85),
-        ButtonHover = Color3.fromRGB(105, 45, 105),
-        Border = Color3.fromRGB(200, 80, 160)
-    },
-    Matrix = {
-        Main = Color3.fromRGB(0, 20, 0),
-        Secondary = Color3.fromRGB(0, 30, 0),
-        Accent = Color3.fromRGB(0, 255, 0),
-        Text = Color3.fromRGB(0, 255, 0),
-        Button = Color3.fromRGB(0, 40, 0),
-        ButtonHover = Color3.fromRGB(0, 60, 0),
-        Border = Color3.fromRGB(0, 100, 0)
+        Button = Color3.fromRGB(40, 65, 90),
+        ButtonHover = Color3.fromRGB(50, 85, 120),
+        Border = Color3.fromRGB(0, 140, 180)
     }
 }
 
 local currentTheme = Themes.Dark
-local rainbowEnabled = false
-local rainbowConnection = nil
+local currentWindow = nil
 
--- Функция для радужного эффекта
-local function startRainbowEffect(object, property)
-    if rainbowConnection then
-        rainbowConnection:Disconnect()
-    end
-    
-    local hue = 0
-    rainbowConnection = RunService.Heartbeat:Connect(function(delta)
-        if not rainbowEnabled then
-            rainbowConnection:Disconnect()
-            return
-        end
-        
-        hue = (hue + delta * 2) % 1
-        local color = Color3.fromHSV(hue, 0.8, 1)
-        object[property] = color
-    end)
-end
-
--- Функция для создания скругленных кнопок с градиентом
+-- Функция для создания скругленных кнопок
 local function createRoundButton(name, size, position, parent)
     local button = Instance.new("TextButton")
     button.Name = name
@@ -97,7 +49,7 @@ local function createRoundButton(name, size, position, parent)
     button.BorderSizePixel = 0
     button.Text = ""
     button.AutoButtonColor = false
-    button.ZIndex = 2
+    button.ZIndex = 3
     
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
@@ -105,7 +57,7 @@ local function createRoundButton(name, size, position, parent)
     
     local stroke = Instance.new("UIStroke")
     stroke.Color = currentTheme.Border
-    stroke.Thickness = 2
+    stroke.Thickness = 1
     stroke.Parent = button
     
     if parent then
@@ -115,7 +67,7 @@ local function createRoundButton(name, size, position, parent)
     return button
 end
 
--- Функция для создания скругленных фреймов с тенью
+-- Функция для создания скругленных фреймов
 local function createRoundFrame(name, size, position, parent)
     local frame = Instance.new("Frame")
     frame.Name = name
@@ -123,30 +75,16 @@ local function createRoundFrame(name, size, position, parent)
     frame.Position = position
     frame.BackgroundColor3 = currentTheme.Main
     frame.BorderSizePixel = 0
-    frame.ZIndex = 1
+    frame.ZIndex = 2
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = frame
     
     local stroke = Instance.new("UIStroke")
     stroke.Color = currentTheme.Border
-    stroke.Thickness = 2
+    stroke.Thickness = 1
     stroke.Parent = frame
-    
-    -- Эффект тени
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.Size = UDim2.new(1, 20, 1, 20)
-    shadow.Position = UDim2.new(0, -10, 0, -10)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://5554236805"
-    shadow.ImageColor3 = Color3.new(0, 0, 0)
-    shadow.ImageTransparency = 0.8
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(23, 23, 277, 277)
-    shadow.ZIndex = 0
-    shadow.Parent = frame
     
     if parent then
         frame.Parent = parent
@@ -155,51 +93,35 @@ local function createRoundFrame(name, size, position, parent)
     return frame
 end
 
--- Функция для создания кнопок с иконками
+-- Функция для создания кнопок
 local function createButton(text, size, position, parent, callback)
     local button = createRoundButton("Button", size, position, parent)
     
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(1, -10, 1, 0)
+    label.Size = UDim2.new(1, -20, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = currentTheme.Text
-    label.TextSize = 14
-    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 13
+    label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 3
+    label.ZIndex = 4
     label.Parent = button
-    
-    -- Иконка стрелки
-    local icon = Instance.new("TextLabel")
-    icon.Name = "Icon"
-    icon.Size = UDim2.new(0, 20, 0, 20)
-    icon.Position = UDim2.new(1, -25, 0.5, -10)
-    icon.BackgroundTransparency = 1
-    icon.Text = "›"
-    icon.TextColor3 = currentTheme.Text
-    icon.TextSize = 16
-    icon.Font = Enum.Font.GothamBold
-    icon.ZIndex = 3
-    icon.Parent = button
     
     -- Анимации при наведении
     button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.ButtonHover}):Play()
-        TweenService:Create(icon, TweenInfo.new(0.2), {TextColor3 = currentTheme.Accent}):Play()
+        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = currentTheme.ButtonHover}):Play()
     end)
     
     button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = currentTheme.Button}):Play()
-        TweenService:Create(icon, TweenInfo.new(0.2), {TextColor3 = currentTheme.Text}):Play()
+        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = currentTheme.Button}):Play()
     end)
     
     button.MouseButton1Click:Connect(function()
-        -- Анимация нажатия
         TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = currentTheme.Accent}):Play()
-        wait(0.1)
+        task.wait(0.1)
         TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = currentTheme.ButtonHover}):Play()
         
         if callback then
@@ -210,7 +132,7 @@ local function createButton(text, size, position, parent, callback)
     return button
 end
 
--- Функция для создания переключателей с анимацией
+-- Функция для создания переключателей
 local function createToggle(text, size, position, parent, callback, default)
     local toggleButton = createRoundButton("Toggle", size, position, parent)
     toggleButton.BackgroundColor3 = currentTheme.Secondary
@@ -218,37 +140,37 @@ local function createToggle(text, size, position, parent, callback, default)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Position = UDim2.new(0, 15, 0, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = currentTheme.Text
-    label.TextSize = 14
-    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 13
+    label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 3
+    label.ZIndex = 4
     label.Parent = toggleButton
     
-    local toggleContainer = createRoundFrame("ToggleContainer", UDim2.new(0, 50, 0, 24), UDim2.new(1, -60, 0.5, -12), toggleButton)
+    local toggleContainer = createRoundFrame("ToggleContainer", UDim2.new(0, 45, 0, 22), UDim2.new(1, -52, 0.5, -11), toggleButton)
     toggleContainer.BackgroundColor3 = currentTheme.Main
-    toggleContainer.ZIndex = 3
+    toggleContainer.ZIndex = 4
     
-    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 18, 0, 18), UDim2.new(0, 3, 0.5, -9), toggleContainer)
+    local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 16, 0, 16), UDim2.new(0, 3, 0.5, -8), toggleContainer)
     toggleDot.BackgroundColor3 = currentTheme.Text
-    toggleDot.ZIndex = 4
+    toggleDot.ZIndex = 5
     
     local isToggled = default or false
     
     local function updateToggle()
         if isToggled then
-            TweenService:Create(toggleDot, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Position = UDim2.new(1, -21, 0.5, -9)
+            TweenService:Create(toggleDot, TweenInfo.new(0.2), {
+                Position = UDim2.new(1, -19, 0.5, -8)
             }):Play()
             TweenService:Create(toggleContainer, TweenInfo.new(0.2), {
                 BackgroundColor3 = currentTheme.Accent
             }):Play()
         else
-            TweenService:Create(toggleDot, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0, 3, 0.5, -9)
+            TweenService:Create(toggleDot, TweenInfo.new(0.2), {
+                Position = UDim2.new(0, 3, 0.5, -8)
             }):Play()
             TweenService:Create(toggleContainer, TweenInfo.new(0.2), {
                 BackgroundColor3 = currentTheme.Main
@@ -279,33 +201,33 @@ local function createTextField(text, size, position, parent, callback, default)
     
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(0.3, 0, 1, 0)
-    label.Position = UDim2.new(0, 15, 0, 0)
+    label.Size = UDim2.new(0.35, 0, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = currentTheme.Text
     label.TextSize = 12
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 2
+    label.ZIndex = 3
     label.Parent = textField
     
-    local inputContainer = createRoundFrame("InputContainer", UDim2.new(0.65, -20, 0.7, 0), UDim2.new(0.35, 10, 0.15, 0), textField)
+    local inputContainer = createRoundFrame("InputContainer", UDim2.new(0.6, -15, 0.6, 0), UDim2.new(0.4, 5, 0.2, 0), textField)
     inputContainer.BackgroundColor3 = currentTheme.Main
-    inputContainer.ZIndex = 2
+    inputContainer.ZIndex = 3
     
     local input = Instance.new("TextBox")
     input.Name = "Input"
-    input.Size = UDim2.new(1, -10, 1, 0)
-    input.Position = UDim2.new(0, 5, 0, 0)
+    input.Size = UDim2.new(1, -8, 1, 0)
+    input.Position = UDim2.new(0, 4, 0, 0)
     input.BackgroundTransparency = 1
     input.TextColor3 = currentTheme.Text
     input.Text = default or ""
     input.TextSize = 12
     input.Font = Enum.Font.Gotham
-    input.PlaceholderText = "Введите значение..."
-    input.PlaceholderColor3 = Color3.new(0.5, 0.5, 0.5)
-    input.ZIndex = 3
+    input.PlaceholderText = "Введите..."
+    input.PlaceholderColor3 = Color3.new(0.6, 0.6, 0.6)
+    input.ZIndex = 4
     input.Parent = inputContainer
     
     input.Focused:Connect(function()
@@ -336,88 +258,14 @@ local function createTextField(text, size, position, parent, callback, default)
     return textField, textFieldLibrary
 end
 
--- Функция для создания выпадающего списка тем
-local function createThemeSelector(position, parent, onThemeChange)
-    local themeButton = createRoundButton("ThemeSelector", UDim2.new(0, 120, 0, 30), position, parent)
-    themeButton.BackgroundColor3 = currentTheme.Accent
-    
-    local themeLabel = Instance.new("TextLabel")
-    themeLabel.Size = UDim2.new(1, -10, 1, 0)
-    themeLabel.Position = UDim2.new(0, 10, 0, 0)
-    themeLabel.BackgroundTransparency = 1
-    themeLabel.Text = "Тема: Dark"
-    themeLabel.TextColor3 = currentTheme.Text
-    themeLabel.TextSize = 12
-    themeLabel.Font = Enum.Font.GothamSemibold
-    themeLabel.TextXAlignment = Enum.TextXAlignment.Left
-    themeLabel.ZIndex = 3
-    themeLabel.Parent = themeButton
-    
-    local dropdown = createRoundFrame("ThemeDropdown", UDim2.new(0, 120, 0, 0), UDim2.new(0, 0, 1, 5), themeButton)
-    dropdown.BackgroundColor3 = currentTheme.Main
-    dropdown.Visible = false
-    dropdown.ZIndex = 10
-    
-    local themeList = Instance.new("UIListLayout")
-    themeList.Padding = UDim.new(0, 2)
-    themeList.SortOrder = Enum.SortOrder.LayoutOrder
-    themeList.Parent = dropdown
-    
-    local isOpen = false
-    
-    -- Создаем кнопки для каждой темы
-    for themeName, themeData in pairs(Themes) do
-        local themeOption = createRoundButton(themeName, UDim2.new(1, -10, 0, 25), UDim2.new(0, 5, 0, 0), dropdown)
-        themeOption.BackgroundColor3 = themeData.Accent
-        
-        local optionLabel = Instance.new("TextLabel")
-        optionLabel.Size = UDim2.new(1, 0, 1, 0)
-        optionLabel.Position = UDim2.new(0, 0, 0, 0)
-        optionLabel.BackgroundTransparency = 1
-        optionLabel.Text = themeName
-        optionLabel.TextColor3 = themeData.Text
-        optionLabel.TextSize = 11
-        optionLabel.Font = Enum.Font.Gotham
-        optionLabel.Parent = themeOption
-        
-        themeOption.MouseButton1Click:Connect(function()
-            currentTheme = themeData
-            themeLabel.Text = "Тема: " .. themeName
-            dropdown.Visible = false
-            isOpen = false
-            
-            if onThemeChange then
-                onThemeChange(themeName)
-            end
-        end)
-    end
-    
-    themeButton.MouseButton1Click:Connect(function()
-        isOpen = not isOpen
-        if isOpen then
-            dropdown.Visible = true
-            TweenService:Create(dropdown, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 120, 0, (#table.keys(Themes) * 27) + 5)
-            }):Play()
-        else
-            TweenService:Create(dropdown, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 120, 0, 0)
-            }):Play()
-            wait(0.3)
-            dropdown.Visible = false
-        end
-    end)
-    
-    return themeButton
-end
-
 -- Создание главного окна
 local function createWindow(title, size, position)
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = title
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Enabled = false -- Сначала скрыто
     
-    -- Защита GUI для разных экзекуторов
+    -- Защита GUI
     if syn and syn.protect_gui then
         syn.protect_gui(screenGui)
         screenGui.Parent = game:GetService("CoreGui")
@@ -430,44 +278,44 @@ local function createWindow(title, size, position)
     local mainWindow = createRoundFrame("MainWindow", size, position, screenGui)
     mainWindow.ClipsDescendants = true
     
-    -- Заголовок окна с градиентом
-    local titleBar = createRoundFrame("TitleBar", UDim2.new(1, 0, 0, 50), UDim2.new(0, 0, 0, 0), mainWindow)
+    -- Заголовок окна
+    local titleBar = createRoundFrame("TitleBar", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 0), mainWindow)
     titleBar.BackgroundColor3 = currentTheme.Accent
     
     -- Название окна справа
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0.5, 0, 0, 0)
+    titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
+    titleLabel.Position = UDim2.new(0.4, 0, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
-    titleLabel.TextSize = 18
+    titleLabel.TextSize = 16
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Right
-    titleLabel.ZIndex = 2
+    titleLabel.ZIndex = 3
     titleLabel.Parent = titleBar
     
     -- Кнопка закрытия
-    local closeButton = createRoundButton("CloseButton", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0.5, -15), titleBar)
-    closeButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    local closeButton = createRoundButton("CloseButton", UDim2.new(0, 28, 0, 28), UDim2.new(1, -32, 0.5, -14), titleBar)
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
     
     local closeLabel = Instance.new("TextLabel")
     closeLabel.Size = UDim2.new(1, 0, 1, 0)
     closeLabel.Position = UDim2.new(0, 0, 0, 0)
     closeLabel.BackgroundTransparency = 1
-    closeLabel.Text = "✕"
+    closeLabel.Text = "×"
     closeLabel.TextColor3 = currentTheme.Text
-    closeLabel.TextSize = 16
+    closeLabel.TextSize = 18
     closeLabel.Font = Enum.Font.GothamBold
-    closeLabel.ZIndex = 3
+    closeLabel.ZIndex = 4
     closeLabel.Parent = closeButton
     
     closeButton.MouseButton1Click:Connect(function()
-        screenGui:Destroy()
+        toggleGUI() -- Используем функцию переключения
     end)
     
     -- Контентная область
-    local contentFrame = createRoundFrame("Content", UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), mainWindow)
+    local contentFrame = createRoundFrame("Content", UDim2.new(1, -16, 1, -56), UDim2.new(0, 8, 0, 48), mainWindow)
     contentFrame.BackgroundColor3 = currentTheme.Secondary
     
     local scrollingFrame = Instance.new("ScrollingFrame")
@@ -475,19 +323,19 @@ local function createWindow(title, size, position)
     scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
     scrollingFrame.BackgroundTransparency = 1
     scrollingFrame.BorderSizePixel = 0
-    scrollingFrame.ScrollBarThickness = 6
+    scrollingFrame.ScrollBarThickness = 4
     scrollingFrame.ScrollBarImageColor3 = currentTheme.Accent
     scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scrollingFrame.ZIndex = 2
+    scrollingFrame.ZIndex = 3
     scrollingFrame.Parent = contentFrame
     
     local uiListLayout = Instance.new("UIListLayout")
-    uiListLayout.Padding = UDim.new(0, 12)
+    uiListLayout.Padding = UDim.new(0, 8)
     uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     uiListLayout.Parent = scrollingFrame
     
     uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 20)
+        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 16)
     end)
     
     -- Перетаскивание окна
@@ -531,7 +379,7 @@ local function createWindow(title, size, position)
         local tabId = #tabContents + 1
         
         -- Создаем кнопку таба
-        local tabButton = createRoundButton("TabButton", UDim2.new(0, 100, 0, 35), UDim2.new(0, 15 + (110 * (#tabContents)), 0, 8), titleBar)
+        local tabButton = createRoundButton("TabButton", UDim2.new(0, 90, 0, 32), UDim2.new(0, 10 + (95 * (#tabContents)), 0, 4), titleBar)
         tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
         
         local tabButtonLabel = Instance.new("TextLabel")
@@ -541,8 +389,8 @@ local function createWindow(title, size, position)
         tabButtonLabel.Text = tabTitle
         tabButtonLabel.TextColor3 = currentTheme.Text
         tabButtonLabel.TextSize = 12
-        tabButtonLabel.Font = Enum.Font.GothamSemibold
-        tabButtonLabel.ZIndex = 3
+        tabButtonLabel.Font = Enum.Font.Gotham
+        tabButtonLabel.ZIndex = 4
         tabButtonLabel.Parent = tabButton
         
         tabButton.MouseButton1Click:Connect(function()
@@ -564,20 +412,20 @@ local function createWindow(title, size, position)
         tabContent.Position = UDim2.new(0, 0, 0, 0)
         tabContent.BackgroundTransparency = 1
         tabContent.BorderSizePixel = 0
-        tabContent.ScrollBarThickness = 6
+        tabContent.ScrollBarThickness = 4
         tabContent.ScrollBarImageColor3 = currentTheme.Accent
         tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
         tabContent.Visible = (#tabContents == 0)
-        tabContent.ZIndex = 2
+        tabContent.ZIndex = 3
         tabContent.Parent = scrollingFrame
         
         local tabListLayout = Instance.new("UIListLayout")
-        tabListLayout.Padding = UDim.new(0, 12)
+        tabListLayout.Padding = UDim.new(0, 8)
         tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         tabListLayout.Parent = tabContent
         
         tabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            tabContent.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 20)
+            tabContent.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 16)
         end)
         
         table.insert(tabButtons, tabButton)
@@ -590,52 +438,80 @@ local function createWindow(title, size, position)
         local optionLibrary = {}
         
         function optionLibrary.Button(buttonConfig)
-            return createButton(buttonConfig.Text, UDim2.new(1, -20, 0, 45), UDim2.new(0, 10, 0, 0), tabContent, buttonConfig.Callback)
+            return createButton(buttonConfig.Text, UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 0), tabContent, buttonConfig.Callback)
         end
         
         function optionLibrary.Toggle(toggleConfig)
-            return createToggle(toggleConfig.Text, UDim2.new(1, -20, 0, 45), UDim2.new(0, 10, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled)
+            return createToggle(toggleConfig.Text, UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled)
         end
         
         function optionLibrary.TextField(textFieldConfig)
-            return createTextField(textFieldConfig.Text, UDim2.new(1, -20, 0, 45), UDim2.new(0, 10, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText)
+            return createTextField(textFieldConfig.Text, UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText)
         end
         
         return optionLibrary
     end
     
-    -- Добавляем селектор тем
-    local themeSelector = createThemeSelector(UDim2.new(0, 15, 0, 8), titleBar, function(themeName)
-        if themeName == "Rainbow" then
-            rainbowEnabled = true
-            startRainbowEffect(titleBar, "BackgroundColor3")
+    -- Функция для показа/скрытия GUI
+    local function setVisible(visible)
+        screenGui.Enabled = visible
+        if visible then
+            mainWindow.Size = UDim2.new(0, 0, 0, 0)
+            TweenService:Create(mainWindow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = size
+            }):Play()
         else
-            rainbowEnabled = false
-            if rainbowConnection then
-                rainbowConnection:Disconnect()
-            end
-            titleBar.BackgroundColor3 = currentTheme.Accent
+            TweenService:Create(mainWindow, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 0, 0, 0)
+            }):Play()
+            task.wait(0.2)
+            screenGui.Enabled = false
         end
-    end)
+    end
     
-    return tabSystem
+    return {
+        New = tabSystem.New,
+        SetVisible = setVisible,
+        ScreenGui = screenGui
+    }
 end
+
+-- Глобальная функция для переключения GUI
+function toggleGUI()
+    if currentWindow then
+        local currentState = currentWindow.ScreenGui.Enabled
+        currentWindow.SetVisible(not currentState)
+    end
+end
+
+-- Обработчик клавиши Alt
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
+        toggleGUI()
+    end
+end)
 
 -- Создаем Material-совместимый интерфейс
 local Material = {}
 
 function Material.Load(config)
     local title = config.Title or "MaterialLua"
-    local sizeX = config.SizeX or 500
-    local sizeY = config.SizeY or 450
+    local sizeX = config.SizeX or 480
+    local sizeY = config.SizeY or 420
     local theme = config.Theme or "Dark"
     
     -- Позиция сверху по центру
-    local position = UDim2.new(0.5, -sizeX/2, 0, 50)
+    local position = UDim2.new(0.5, -sizeX/2, 0, 40)
     
     currentTheme = Themes[theme] or Themes.Dark
     
     local window = createWindow(title, UDim2.new(0, sizeX, 0, sizeY), position)
+    currentWindow = window
+    
+    -- Сначала скрываем GUI
+    window.SetVisible(false)
     
     -- Возвращаем совместимый с MaterialLua интерфейс
     return {
