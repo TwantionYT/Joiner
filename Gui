@@ -15,20 +15,39 @@ local Themes = {
         Text = Color3.fromRGB(255, 255, 255),
         Button = Color3.fromRGB(85, 85, 85),
         ButtonHover = Color3.fromRGB(100, 100, 100)
-    },
-    Light = {
-        Main = Color3.fromRGB(255, 255, 255),
-        Secondary = Color3.fromRGB(240, 240, 240),
-        Accent = Color3.fromRGB(124, 37, 255),
-        Text = Color3.fromRGB(0, 0, 0),
-        Button = Color3.fromRGB(230, 230, 230),
-        ButtonHover = Color3.fromRGB(220, 220, 220)
     }
 }
 
 local currentTheme = Themes.Dark
 
--- Функция для создания скругленных элементов
+-- Функция для создания скругленных кнопок
+local function createRoundButton(name, size, position, parent)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Size = size
+    button.Position = position
+    button.BackgroundColor3 = currentTheme.Button
+    button.BorderSizePixel = 0
+    button.Text = ""
+    button.AutoButtonColor = false
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = button
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentTheme.Secondary
+    stroke.Thickness = 1
+    stroke.Parent = button
+    
+    if parent then
+        button.Parent = parent
+    end
+    
+    return button
+end
+
+-- Функция для создания скругленных фреймов
 local function createRoundFrame(name, size, position, parent)
     local frame = Instance.new("Frame")
     frame.Name = name
@@ -55,8 +74,7 @@ end
 
 -- Функция для создания кнопок
 local function createButton(text, size, position, parent, callback)
-    local button = createRoundFrame("Button", size, position, parent)
-    button.BackgroundColor3 = currentTheme.Button
+    local button = createRoundButton("Button", size, position, parent)
     
     local label = Instance.new("TextLabel")
     label.Name = "Label"
@@ -89,7 +107,7 @@ end
 
 -- Функция для создания переключателей
 local function createToggle(text, size, position, parent, callback, default)
-    local toggle = createRoundFrame("Toggle", size, position, parent)
+    local toggle = createRoundButton("Toggle", size, position, parent)
     toggle.BackgroundColor3 = currentTheme.Secondary
     
     local label = Instance.new("TextLabel")
@@ -104,7 +122,7 @@ local function createToggle(text, size, position, parent, callback, default)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = toggle
     
-    local toggleButton = createRoundFrame("ToggleButton", UDim2.new(0, 40, 0, 20), UDim2.new(1, -50, 0.5, -10), toggle)
+    local toggleButton = createRoundButton("ToggleButton", UDim2.new(0, 40, 0, 20), UDim2.new(1, -50, 0.5, -10), toggle)
     toggleButton.BackgroundColor3 = currentTheme.Main
     
     local toggleDot = createRoundFrame("ToggleDot", UDim2.new(0, 16, 0, 16), UDim2.new(0, 2, 0.5, -8), toggleButton)
@@ -224,8 +242,8 @@ local function createWindow(title, size, position)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = titleBar
     
-    -- Кнопка закрытия
-    local closeButton = createRoundFrame("CloseButton", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0.5, -15), titleBar)
+    -- Кнопка закрытия (ИСПРАВЛЕНО: используем TextButton)
+    local closeButton = createRoundButton("CloseButton", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0.5, -15), titleBar)
     closeButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
     
     local closeLabel = Instance.new("TextLabel")
@@ -305,8 +323,21 @@ local function createWindow(title, size, position)
         local tabTitle = tabConfig.Title or "Tab"
         local tabId = #tabContents + 1
         
-        -- Создаем кнопку таба
-        local tabButton = createButton(tabTitle, UDim2.new(0, 80, 0, 30), UDim2.new(0, 10 + (90 * (#tabContents)), 0, 5), titleBar, function()
+        -- Создаем кнопку таба (ИСПРАВЛЕНО: используем TextButton)
+        local tabButton = createRoundButton("TabButton", UDim2.new(0, 80, 0, 30), UDim2.new(0, 10 + (90 * (#tabContents)), 0, 5), titleBar)
+        tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
+        
+        local tabButtonLabel = Instance.new("TextLabel")
+        tabButtonLabel.Size = UDim2.new(1, 0, 1, 0)
+        tabButtonLabel.Position = UDim2.new(0, 0, 0, 0)
+        tabButtonLabel.BackgroundTransparency = 1
+        tabButtonLabel.Text = tabTitle
+        tabButtonLabel.TextColor3 = currentTheme.Text
+        tabButtonLabel.TextSize = 12
+        tabButtonLabel.Font = Enum.Font.GothamSemibold
+        tabButtonLabel.Parent = tabButton
+        
+        tabButton.MouseButton1Click:Connect(function()
             -- Показываем только выбранный таб
             for i, content in ipairs(tabContents) do
                 content.Visible = (i == tabId)
@@ -317,8 +348,6 @@ local function createWindow(title, size, position)
             end
             currentTab = tabId
         end)
-        
-        tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
         
         -- Создаем контент таба
         local tabContent = Instance.new("ScrollingFrame")
@@ -381,7 +410,7 @@ function Material.Load(config)
     
     -- Устанавливаем тему
     if theme == "Light" then
-        currentTheme = Themes.Light
+        currentTheme = Themes.Light or Themes.Dark
     else
         currentTheme = Themes.Dark
     end
