@@ -857,19 +857,12 @@ local function createWindow(title, size, position)
     }
 end
 
--- Глобальная функция для переключения GUI
-function toggleGUI()
-    if currentWindow then
-        local currentState = currentWindow.ScreenGui.Enabled
-        currentWindow.SetVisible(not currentState)
-    end
-end
-
--- Создаем кнопку для мобильных устройств
-if isMobile then
+-- Создаем кнопку для мобильных устройств и ПК
+local function createToggleButton()
     local mobileGui = Instance.new("ScreenGui")
     mobileGui.Name = "MobileToggleGUI_" .. HttpService:GenerateGUID(false)
     mobileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    mobileGui.DisplayOrder = 999
     
     if syn and syn.protect_gui then
         syn.protect_gui(mobileGui)
@@ -895,7 +888,7 @@ if isMobile then
     mobileToggleButton.Parent = mobileGui
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 35)
+    corner.CornerRadius = UDim.new(1, 0) -- Полностью круглая кнопка
     corner.Parent = mobileToggleButton
     
     local stroke = Instance.new("UIStroke")
@@ -903,12 +896,47 @@ if isMobile then
     stroke.Thickness = 3
     stroke.Parent = mobileToggleButton
     
+    -- Добавляем свечение
+    local buttonGlow = createGlow(mobileToggleButton, currentTheme.Accent, 10)
+    buttonGlow.Visible = true
+    
+    -- Анимации для кнопки
+    mobileToggleButton.MouseEnter:Connect(function()
+        if not isMobile then
+            TweenService:Create(mobileToggleButton, TweenInfo.new(CONFIG.AnimationDuration), {
+                Size = UDim2.new(0, 75, 0, 75),
+                BackgroundColor3 = currentTheme.ButtonHover
+            }):Play()
+        end
+    end)
+    
+    mobileToggleButton.MouseLeave:Connect(function()
+        if not isMobile then
+            TweenService:Create(mobileToggleButton, TweenInfo.new(CONFIG.AnimationDuration), {
+                Size = UDim2.new(0, 70, 0, 70),
+                BackgroundColor3 = currentTheme.Accent
+            }):Play()
+        end
+    end)
+    
     mobileToggleButton.MouseButton1Click:Connect(function()
         toggleGUI()
     end)
     
-    print("📱 Мобильная кнопка активирована")
+    print("🔘 Кнопка переключения GUI создана для всех устройств")
+    return mobileGui
 end
+
+-- Глобальная функция для переключения GUI
+function toggleGUI()
+    if currentWindow then
+        local currentState = currentWindow.ScreenGui.Enabled
+        currentWindow.SetVisible(not currentState)
+    end
+end
+
+-- Создаем кнопку сразу при загрузке
+createToggleButton()
 
 -- Обработчик клавиши Alt (только для ПК)
 if not isMobile then
