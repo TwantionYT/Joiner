@@ -17,7 +17,7 @@ local function getWindowSize()
     if isMobile then
         return UDim2.new(0.9, 0, 0.8, 0) -- 90% ширины, 80% высоты экрана
     else
-        return UDim2.new(0, 500, 0, 500) -- Фиксированный размер для ПК
+        return UDim2.new(0, 600, 0, 500) -- Увеличили ширину для боковых вкладок
     end
 end
 
@@ -26,7 +26,7 @@ local function getWindowPosition()
     if isMobile then
         return UDim2.new(0.5, 0, 0.5, 0) -- По центру экрана
     else
-        return UDim2.new(0.5, -250, 0.5, -250) -- По центру для ПК
+        return UDim2.new(0.5, -300, 0.5, -250) -- По центру для ПК
     end
 end
 
@@ -537,7 +537,7 @@ local function createThemeSelector(parent)
     return themeCard
 end
 
--- Создание главного окна
+-- Создание главного окна с вертикальными вкладками
 local function createWindow(title, size, position)
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "MaterialLua_" .. HttpService:GenerateGUID(false)
@@ -558,7 +558,7 @@ local function createWindow(title, size, position)
     mainWindow.ClipsDescendants = true
     
     if isMobile then
-        mainWindow.AnchorPoint = Vector2.new(0.5, 0.5) -- Для центрирования на мобильных
+        mainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
     end
     
     -- Фон с градиентом
@@ -589,12 +589,12 @@ local function createWindow(title, size, position)
     
     -- Логотип слева
     local logoIcon = createIcon("⚡", 28, titleBar)
-    logoIcon.Position = UDim2.new(0, 12, 0.5, -14) -- Фиксированная позиция слева
+    logoIcon.Position = UDim2.new(0, 12, 0.5, -14)
     
     -- Название окна рядом с логотипом
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(0, 0, 1, 0) -- Авторазмер по ширине
-    titleLabel.Position = UDim2.new(0, 45, 0, 0) -- После иконки
+    titleLabel.Size = UDim2.new(0, 0, 1, 0)
+    titleLabel.Position = UDim2.new(0, 45, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = currentTheme.Text
@@ -620,7 +620,7 @@ local function createWindow(title, size, position)
     local closeButton = Instance.new("TextButton")
     closeButton.Name = "CloseButton"
     closeButton.Size = UDim2.new(0, 32, 0, 32)
-    closeButton.Position = UDim2.new(1, -40, 0.5, -16) -- Фиксированная позиция справа
+    closeButton.Position = UDim2.new(1, -40, 0.5, -16)
     closeButton.BackgroundColor3 = currentTheme.Error
     closeButton.BorderSizePixel = 0
     closeButton.Text = "×"
@@ -665,32 +665,64 @@ local function createWindow(title, size, position)
         toggleGUI()
     end)
     
-    -- Контентная область
-    local contentFrame = createRoundFrame("Content", UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), mainWindow)
-    contentFrame.BackgroundColor3 = currentTheme.Secondary
+    -- Основной контейнер для вкладок и контента
+    local mainContainer = createRoundFrame("MainContainer", UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), mainWindow)
+    mainContainer.BackgroundColor3 = currentTheme.Secondary
     
-    local scrollingFrame = Instance.new("ScrollingFrame")
-    scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-    scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
-    scrollingFrame.BackgroundTransparency = 1
-    scrollingFrame.BorderSizePixel = 0
-    scrollingFrame.ScrollBarThickness = 6
-    scrollingFrame.ScrollBarImageColor3 = currentTheme.Accent
-    scrollingFrame.ScrollBarImageTransparency = 0.7
-    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scrollingFrame.ZIndex = 4
-    scrollingFrame.Parent = contentFrame
+    -- Панель вкладок слева (вертикальная)
+    local tabsPanel = createRoundFrame("TabsPanel", UDim2.new(0, 150, 1, -20), UDim2.new(0, 10, 0, 10), mainContainer)
+    tabsPanel.BackgroundColor3 = currentTheme.Main
+    tabsPanel.ZIndex = 4
     
-    local uiListLayout = Instance.new("UIListLayout")
-    uiListLayout.Padding = UDim.new(0, 12)
-    uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    uiListLayout.Parent = scrollingFrame
+    local tabsScrolling = Instance.new("ScrollingFrame")
+    tabsScrolling.Size = UDim2.new(1, -10, 1, -10)
+    tabsScrolling.Position = UDim2.new(0, 5, 0, 5)
+    tabsScrolling.BackgroundTransparency = 1
+    tabsScrolling.BorderSizePixel = 0
+    tabsScrolling.ScrollBarThickness = 4
+    tabsScrolling.ScrollBarImageColor3 = currentTheme.Accent
+    tabsScrolling.ScrollBarImageTransparency = 0.7
+    tabsScrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
+    tabsScrolling.ZIndex = 4
+    tabsScrolling.Parent = tabsPanel
     
-    uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 20)
+    local tabsListLayout = Instance.new("UIListLayout")
+    tabsListLayout.Padding = UDim.new(0, 8)
+    tabsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabsListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    tabsListLayout.Parent = tabsScrolling
+    
+    tabsListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        tabsScrolling.CanvasSize = UDim2.new(0, 0, 0, tabsListLayout.AbsoluteContentSize.Y + 10)
     end)
     
-    -- Перетаскивание окна (работает на всех устройствах)
+    -- Контентная область справа
+    local contentArea = createRoundFrame("ContentArea", UDim2.new(1, -170, 1, -20), UDim2.new(0, 160, 0, 10), mainContainer)
+    contentArea.BackgroundColor3 = currentTheme.Main
+    contentArea.ZIndex = 4
+    
+    local contentScrolling = Instance.new("ScrollingFrame")
+    contentScrolling.Size = UDim2.new(1, -10, 1, -10)
+    contentScrolling.Position = UDim2.new(0, 5, 0, 5)
+    contentScrolling.BackgroundTransparency = 1
+    contentScrolling.BorderSizePixel = 0
+    contentScrolling.ScrollBarThickness = 6
+    contentScrolling.ScrollBarImageColor3 = currentTheme.Accent
+    contentScrolling.ScrollBarImageTransparency = 0.7
+    contentScrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
+    contentScrolling.ZIndex = 4
+    contentScrolling.Parent = contentArea
+    
+    local contentListLayout = Instance.new("UIListLayout")
+    contentListLayout.Padding = UDim.new(0, 12)
+    contentListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentListLayout.Parent = contentScrolling
+    
+    contentListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        contentScrolling.CanvasSize = UDim2.new(0, 0, 0, contentListLayout.AbsoluteContentSize.Y + 20)
+    end)
+    
+    -- Перетаскивание окна
     local dragging = false
     local dragInput, dragStart, startPos
     
@@ -703,7 +735,7 @@ local function createWindow(title, size, position)
     
     titleBar.InputBegan:Connect(function(input)
         if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) and input.UserInputState == Enum.UserInputState.Begin then
-            if input.Position.X < closeButton.AbsolutePosition.X then -- Не начинать перетаскивание при клике на кнопку закрытия
+            if input.Position.X < closeButton.AbsolutePosition.X then
                 dragging = true
                 dragStart = input.Position
                 startPos = mainWindow.Position
@@ -743,65 +775,68 @@ local function createWindow(title, size, position)
         local tabIcon = tabConfig.Icon or "📄"
         local tabId = #tabContents + 1
         
-        -- Создаем кнопку таба - начинаем после названия окна
-        local titleTextWidth = titleLabel.AbsoluteSize.X
-        local tabStartPosition = 45 + titleTextWidth + 20 -- Отступ после названия
-        
-        local tabButton, tabGlow = createRoundButton("TabButton", UDim2.new(0, 100, 0, 36), UDim2.new(0, tabStartPosition + (105 * (#tabContents)), 0, 6), titleBar)
+        -- Создаем кнопку вкладки в вертикальной панели
+        local tabButton, tabGlow = createRoundButton("TabButton", UDim2.new(0.9, 0, 0, 50), UDim2.new(0.05, 0, 0, 0), tabsScrolling)
         tabButton.BackgroundColor3 = (#tabContents == 0) and currentTheme.Accent or currentTheme.Button
         
-        local tabIconLabel = createIcon(tabIcon, 20, tabButton)
-        tabIconLabel.Position = UDim2.new(0, 10, 0.5, -10)
+        local tabContentFrame = Instance.new("Frame")
+        tabContentFrame.Size = UDim2.new(1, 0, 1, 0)
+        tabContentFrame.Position = UDim2.new(0, 0, 0, 0)
+        tabContentFrame.BackgroundTransparency = 1
+        tabContentFrame.ZIndex = 5
+        tabContentFrame.Parent = tabButton
+        
+        -- Иконка вкладки
+        local tabIconLabel = createIcon(tabIcon, 24, tabContentFrame)
+        tabIconLabel.Position = UDim2.new(0, 15, 0.5, -12)
         tabIconLabel.TextColor3 = currentTheme.Text
         
+        -- Название вкладки
         local tabButtonLabel = Instance.new("TextLabel")
-        tabButtonLabel.Size = UDim2.new(1, -35, 1, 0)
-        tabButtonLabel.Position = UDim2.new(0, 35, 0, 0)
+        tabButtonLabel.Size = UDim2.new(1, -50, 1, 0)
+        tabButtonLabel.Position = UDim2.new(0, 45, 0, 0)
         tabButtonLabel.BackgroundTransparency = 1
         tabButtonLabel.Text = tabTitle
         tabButtonLabel.TextColor3 = currentTheme.Text
         tabButtonLabel.TextSize = 12
-        tabButtonLabel.Font = Enum.Font.Gotham
+        tabButtonLabel.Font = Enum.Font.GothamSemibold
+        tabButtonLabel.TextXAlignment = Enum.TextXAlignment.Left
         tabButtonLabel.ZIndex = 5
-        tabButtonLabel.Parent = tabButton
+        tabButtonLabel.Parent = tabContentFrame
         
         tabGlow.Visible = (#tabContents == 0)
         
+        -- Создаем контент вкладки
+        local tabContent = Instance.new("Frame")
+        tabContent.Name = tabTitle
+        tabContent.Size = UDim2.new(1, 0, 1, 0)
+        tabContent.Position = UDim2.new(0, 0, 0, 0)
+        tabContent.BackgroundTransparency = 1
+        tabContent.Visible = (#tabContents == 0)
+        tabContent.ZIndex = 4
+        tabContent.Parent = contentScrolling
+        
+        local tabContentListLayout = Instance.new("UIListLayout")
+        tabContentListLayout.Padding = UDim.new(0, 12)
+        tabContentListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        tabContentListLayout.Parent = tabContent
+        
+        tabContentListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            -- Размер контента автоматически регулируется через scrolling frame
+        end)
+        
+        -- Обработчик клика по вкладке
         tabButton.MouseButton1Click:Connect(function()
-            -- Показываем только выбранный таб
+            -- Скрываем все вкладки
             for i, content in ipairs(tabContents) do
                 content.Visible = (i == tabId)
             end
-            -- Обновляем стиль кнопок
+            -- Обновляем стиль кнопок вкладок
             for i, btnData in ipairs(tabButtons) do
                 btnData.button.BackgroundColor3 = (i == tabId) and currentTheme.Accent or currentTheme.Button
                 btnData.glow.Visible = (i == tabId)
             end
             currentTab = tabId
-        end)
-        
-        -- Создаем контент таба
-        local tabContent = Instance.new("ScrollingFrame")
-        tabContent.Name = tabTitle
-        tabContent.Size = UDim2.new(1, 0, 1, 0)
-        tabContent.Position = UDim2.new(0, 0, 0, 0)
-        tabContent.BackgroundTransparency = 1
-        tabContent.BorderSizePixel = 0
-        tabContent.ScrollBarThickness = 6
-        tabContent.ScrollBarImageColor3 = currentTheme.Accent
-        tabContent.ScrollBarImageTransparency = 0.7
-        tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
-        tabContent.Visible = (#tabContents == 0)
-        tabContent.ZIndex = 4
-        tabContent.Parent = scrollingFrame
-        
-        local tabListLayout = Instance.new("UIListLayout")
-        tabListLayout.Padding = UDim.new(0, 12)
-        tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        tabListLayout.Parent = tabContent
-        
-        tabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            tabContent.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 20)
         end)
         
         table.insert(tabButtons, {button = tabButton, glow = tabGlow})
@@ -888,7 +923,7 @@ local function createToggleButton()
     mobileToggleButton.Parent = mobileGui
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0) -- Полностью круглая кнопка
+    corner.CornerRadius = UDim.new(1, 0)
     corner.Parent = mobileToggleButton
     
     local stroke = Instance.new("UIStroke")
@@ -954,7 +989,7 @@ local Material = {}
 
 function Material.Load(config)
     local title = config.Title or "MaterialLua"
-    local sizeX = config.SizeX or 500
+    local sizeX = config.SizeX or 600  -- Увеличили ширину для боковых вкладок
     local sizeY = config.SizeY or 500
     local theme = config.Theme or "Dark"
     
