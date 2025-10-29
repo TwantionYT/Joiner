@@ -17,7 +17,7 @@ local function getWindowSize()
     if isMobile then
         return UDim2.new(0.9, 0, 0.8, 0) -- 90% ширины, 80% высоты экрана
     else
-        return UDim2.new(0, 600, 0, 500) -- Увеличили ширину для боковых вкладок
+        return UDim2.new(0, 850, 0, 550) -- Увеличили ширину для боковых вкладок
     end
 end
 
@@ -26,7 +26,7 @@ local function getWindowPosition()
     if isMobile then
         return UDim2.new(0.5, 0, 0.5, 0) -- По центру экрана
     else
-        return UDim2.new(0.5, -400, 0.5, -250) -- УВЕЛИЧИЛ СМЕЩЕНИЕ ДО -400 (половина от 800)
+        return UDim2.new(0.5, -425, 0.5, -275) -- По центру для ПК
     end
 end
 
@@ -60,16 +60,16 @@ local Themes = {
     },
     Aqua = {
         Name = "Aqua",
-        Main = Color3.fromRGB(15, 30, 45),
-        Secondary = Color3.fromRGB(25, 45, 65),
-        Accent = Color3.fromRGB(0, 200, 255),
-        Text = Color3.fromRGB(220, 240, 255),
-        Button = Color3.fromRGB(35, 60, 85),
-        ButtonHover = Color3.fromRGB(45, 80, 115),
-        Border = Color3.fromRGB(0, 160, 210),
-        Success = Color3.fromRGB(0, 220, 180),
-        Warning = Color3.fromRGB(255, 200, 80),
-        Error = Color3.fromRGB(255, 100, 120)
+        Main = Color3.fromRGB(10, 25, 40),        -- Более темный синий
+        Secondary = Color3.fromRGB(20, 40, 60),   -- Насыщенный синий
+        Accent = Color3.fromRGB(0, 200, 255),     -- Яркий аквамарин
+        Text = Color3.fromRGB(220, 240, 255),     -- Светло-голубой текст
+        Button = Color3.fromRGB(30, 55, 80),      -- Синие кнопки
+        ButtonHover = Color3.fromRGB(40, 75, 110),-- Более светлые кнопки при наведении
+        Border = Color3.fromRGB(0, 180, 230),     -- Яркая граница
+        Success = Color3.fromRGB(0, 230, 200),    -- Бирюзовый успех
+        Warning = Color3.fromRGB(255, 210, 80),   -- Золотистое предупреждение
+        Error = Color3.fromRGB(255, 100, 130)     -- Коралловая ошибка
     }
 }
 
@@ -93,11 +93,115 @@ local function applyTheme(theme)
         table.remove(themeHistory, 1)
     end
     
+    -- Обновляем все существующие элементы интерфейса
+    if currentWindow then
+        local screenGui = currentWindow.ScreenGui
+        if screenGui and screenGui:FindFirstChild("MainWindow") then
+            local mainWindow = screenGui.MainWindow
+            
+            -- Обновляем основной фон
+            mainWindow.BackgroundColor3 = theme.Main
+            
+            -- Обновляем заголовок
+            local titleBar = mainWindow:FindFirstChild("TitleBar")
+            if titleBar then
+                titleBar.BackgroundColor3 = theme.Accent
+                
+                -- Обновляем кнопку закрытия
+                local closeButton = titleBar:FindFirstChild("CloseButton")
+                if closeButton then
+                    closeButton.BackgroundColor3 = theme.Error
+                    closeButton.TextColor3 = theme.Text
+                end
+                
+                -- Обновляем текст заголовка
+                local titleLabel = titleBar:FindFirstChildWhichIsA("TextLabel")
+                if titleLabel then
+                    titleLabel.TextColor3 = theme.Text
+                end
+                
+                -- Обновляем логотип
+                local logoIcon = titleBar:FindFirstChildWhichIsA("TextLabel")
+                if logoIcon and logoIcon.Text == "⚡" then
+                    logoIcon.TextColor3 = theme.Text
+                end
+            end
+            
+            -- Обновляем основной контейнер
+            local mainContainer = mainWindow:FindFirstChild("MainContainer")
+            if mainContainer then
+                mainContainer.BackgroundColor3 = theme.Secondary
+                
+                -- Обновляем панель вкладок
+                local tabsPanel = mainContainer:FindFirstChild("TabsPanel")
+                if tabsPanel then
+                    tabsPanel.BackgroundColor3 = theme.Main
+                    
+                    -- Обновляем кнопки вертикальных вкладок
+                    local tabsScrolling = tabsPanel:FindFirstChild("ScrollingFrame")
+                    if tabsScrolling then
+                        for _, tabButton in ipairs(tabsScrolling:GetChildren()) do
+                            if tabButton:IsA("TextButton") then
+                                local isActive = tabButton.BackgroundColor3 == currentTheme.Accent
+                                tabButton.BackgroundColor3 = isActive and theme.Accent or theme.Button
+                                
+                                for _, content in ipairs(tabButton:GetDescendants()) do
+                                    if content:IsA("TextLabel") then
+                                        content.TextColor3 = theme.Text
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                -- Обновляем контентную область
+                local contentArea = mainContainer:FindFirstChild("ContentArea")
+                if contentArea then
+                    contentArea.BackgroundColor3 = theme.Main
+                    
+                    -- Обновляем все элементы в контенте
+                    local contentScrolling = contentArea:FindFirstChild("ScrollingFrame")
+                    if contentScrolling then
+                        for _, child in ipairs(contentScrolling:GetChildren()) do
+                            if child:IsA("Frame") then
+                                -- Обновляем карточки
+                                if child.Name == "Card" then
+                                    child.BackgroundColor3 = theme.Secondary
+                                -- Обновляем кнопки
+                                elseif child:IsA("TextButton") and child.Name == "Button" then
+                                    child.BackgroundColor3 = theme.Button
+                                -- Обновляем тогглы
+                                elseif child:IsA("TextButton") and child.Name == "Toggle" then
+                                    child.BackgroundColor3 = theme.Secondary
+                                -- Обновляем текстовые поля
+                                elseif child.Name == "TextField" then
+                                    child.BackgroundColor3 = theme.Secondary
+                                end
+                                
+                                -- Обновляем текст во всех дочерних элементах
+                                for _, descendant in ipairs(child:GetDescendants()) do
+                                    if descendant:IsA("TextLabel") or descendant:IsA("TextBox") then
+                                        descendant.TextColor3 = theme.Text
+                                    elseif descendant:IsA("Frame") and descendant.Name == "ToggleContainer" then
+                                        descendant.BackgroundColor3 = isActive and theme.Accent or theme.Main
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
     -- Обновляем мобильную кнопку если есть
     if mobileToggleButton then
-        mobileToggleButton.BackgroundColor3 = currentTheme.Accent
-        mobileToggleButton.TextColor3 = currentTheme.Text
+        mobileToggleButton.BackgroundColor3 = theme.Accent
+        mobileToggleButton.TextColor3 = theme.Text
     end
+    
+    print("🎨 Тема изменена на: " .. theme.Name)
 end
 
 -- Функция для создания свечения
@@ -476,7 +580,7 @@ end
 
 -- Функция для создания выбора темы
 local function createThemeSelector(parent)
-    local themeCard = createCard(UDim2.new(1, -16, 0, 120), UDim2.new(0, 8, 0, 0), parent)
+    local themeCard = createCard(UDim2.new(1, -8, 0, 120), UDim2.new(0, 4, 0, 0), parent)
     
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -20, 0, 24)
@@ -498,7 +602,7 @@ local function createThemeSelector(parent)
     themesContainer.Parent = themeCard
     
     local layout = Instance.new("UIGridLayout")
-    layout.CellSize = UDim2.new(0, 70, 0, 30)
+    layout.CellSize = UDim2.new(0, 80, 0, 30)
     layout.CellPadding = UDim2.new(0, 8, 0, 8)
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
     layout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -507,7 +611,7 @@ local function createThemeSelector(parent)
     local themeButtons = {}
     
     for themeName, themeData in pairs(Themes) do
-        local themeButton, themeGlow = createRoundButton(themeName, UDim2.new(0, 70, 0, 30), UDim2.new(0, 0, 0, 0), themesContainer)
+        local themeButton, themeGlow = createRoundButton(themeName, UDim2.new(0, 80, 0, 30), UDim2.new(0, 0, 0, 0), themesContainer)
         themeButton.BackgroundColor3 = themeData.Accent
         
         local themeLabel = Instance.new("TextLabel")
@@ -517,10 +621,11 @@ local function createThemeSelector(parent)
         themeLabel.Text = themeData.Name
         themeLabel.TextColor3 = themeData.Text
         themeLabel.TextSize = 11
-        themeLabel.Font = Enum.Font.Gotham
+        themeLabel.Font = Enum.Font.GothamSemibold
         themeLabel.ZIndex = 5
         themeLabel.Parent = themeButton
         
+        -- Подсвечиваем текущую тему
         themeGlow.Visible = (currentTheme.Name == themeData.Name)
         
         themeButton.MouseButton1Click:Connect(function()
@@ -849,15 +954,15 @@ local function createWindow(title, size, position)
         local optionLibrary = {}
         
         function optionLibrary.Button(buttonConfig)
-            return createButton(buttonConfig.Text, UDim2.new(1, -16, 0, 42), UDim2.new(0, 8, 0, 0), tabContent, buttonConfig.Callback, buttonConfig.Icon)
+            return createButton(buttonConfig.Text, UDim2.new(1, -8, 0, 42), UDim2.new(0, 4, 0, 0), tabContent, buttonConfig.Callback, buttonConfig.Icon)
         end
         
         function optionLibrary.Toggle(toggleConfig)
-            return createToggle(toggleConfig.Text, UDim2.new(1, -16, 0, 42), UDim2.new(0, 8, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled, toggleConfig.Icon)
+            return createToggle(toggleConfig.Text, UDim2.new(1, -8, 0, 42), UDim2.new(0, 4, 0, 0), tabContent, toggleConfig.Callback, toggleConfig.Enabled, toggleConfig.Icon)
         end
         
         function optionLibrary.TextField(textFieldConfig)
-            return createTextField(textFieldConfig.Text, UDim2.new(1, -16, 0, 42), UDim2.new(0, 8, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText, textFieldConfig.Icon)
+            return createTextField(textFieldConfig.Text, UDim2.new(1, -8, 0, 42), UDim2.new(0, 4, 0, 0), tabContent, textFieldConfig.Callback, textFieldConfig.SetText, textFieldConfig.Icon)
         end
         
         function optionLibrary.ThemeSelector()
@@ -989,8 +1094,8 @@ local Material = {}
 
 function Material.Load(config)
     local title = config.Title or "MaterialLua"
-    local sizeX = config.SizeX or 600  -- Увеличили ширину для боковых вкладок
-    local sizeY = config.SizeY or 500
+    local sizeX = config.SizeX or 850
+    local sizeY = config.SizeY or 550
     local theme = config.Theme or "Dark"
     
     -- Автоматический размер для мобильных
